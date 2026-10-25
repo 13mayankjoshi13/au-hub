@@ -1,0 +1,43 @@
+
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Secrets
+.env
+.env.*
+!.env.example
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Frontend dependencies and Expo
+node_modules/
+.expo/
+web-build/
+
+# Private data and trained model files
+ml/datasets/private/
+ml/models/
+*.joblib
+*.pth
+*.pt
+
+# Editor and operating system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
