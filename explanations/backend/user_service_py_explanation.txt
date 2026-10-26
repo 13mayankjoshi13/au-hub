@@ -1,0 +1,149 @@
+# User Service — Password Hashing and Verification
+
+## 1. Is file ka purpose
+
+`backend/app/services/user_service.py` password security se related functions provide karti hai.
+
+Is file mein do main operations hain:
+
+1. `hash_password()` — original password ko secure hash mein convert karna.
+2. `verify_password()` — login ke waqt check karna ki entered password stored hash se match karta hai ya nahi.
+
+Password hashing aur password encryption same cheez nahi hain. Hashing one-way operation hota hai; normally stored hash se original password recover nahi kiya ja sakta.
+
+## 2. Import statement
+
+```python
+from pwdlib import PasswordHash
+```
+
+`pwdlib` ek Python library hai jo password hashing aur verification provide karti hai.
+
+`PasswordHash` iska class hai. Iske through hum recommended password-hashing configuration use karenge.
+
+Is library ko install karne ke liye:
+
+```powershell
+python -m pip install "pwdlib[argon2]"
+```
+
+`argon2` extra Argon2 hashing support install karta hai.
+
+## 3. Password hasher object
+
+```python
+password_hasher = PasswordHash.recommended()
+```
+
+Yahan `PasswordHash.recommended()` recommended password-hashing configuration ka object banata hai.
+
+`password_hasher` variable ko hum dono functions mein reuse karte hain.
+
+Har user ke liye alag hasher object banane ki zaroorat nahi hai. Har password hash operation apne salt aur encoded hash data ko handle karta hai.
+
+## 4. `hash_password()` function
+
+```python
+def hash_password(password: str) -> str:
+```
+
+- `def` Python mein function define karta hai.
+- `hash_password` function ka naam hai.
+- `password: str` batata hai ki expected input string hai.
+- `-> str` batata hai ki function string return karta hai.
+
+Python type hints helpful documentation aur tooling provide karte hain; ye apne aap runtime input validation enforce nahi karte.
+
+```python
+"""Convert a plain-text password into a secure password hash."""
+```
+
+Ye docstring hai. Ismein function ka purpose explain kiya gaya hai.
+
+```python
+return password_hasher.hash(password)
+```
+
+Ye line input password ka secure hash generate karke return karti hai.
+
+Example:
+
+```python
+stored_hash = hash_password("ExamplePassword123!")
+print(stored_hash)
+```
+
+Output ek encoded password hash hoga. Exact value har run mein alag ho sakti hai, kyunki password hashing mein salt use hota hai.
+
+**Important:** Real passwords ya unke hashes ko terminal screenshots, public logs, ya GitHub par share mat karna.
+
+## 5. `verify_password()` function
+
+```python
+def verify_password(
+    plain_password: str,
+    hashed_password: str,
+) -> bool:
+```
+
+Function do arguments leta hai:
+
+- `plain_password`: login form mein user ka entered password.
+- `hashed_password`: database mein stored hash.
+
+`-> bool` ka matlab hai ki function boolean result return karne ke liye designed hai: `True` ya `False`.
+
+```python
+"""Check whether a plain-text password matches its stored hash."""
+```
+
+Ye docstring function ka purpose batata hai.
+
+```python
+return password_hasher.verify(plain_password, hashed_password)
+```
+
+`verify()` entered password ko stored hash ke against check karta hai. Iske liye stored hash se original password decrypt nahi kiya jata.
+
+Example:
+
+```python
+hashed = hash_password("ExamplePassword123!")
+
+is_correct = verify_password(
+    "ExamplePassword123!",
+    hashed,
+)
+
+print(is_correct)
+```
+
+Expected result:
+
+```text
+True
+```
+
+Agar entered password match nahi karta, verification false result de sakta hai. Invalid ya malformed stored hash ke liye library exception bhi raise kar sakti hai; production authentication flow mein aise errors ko safely handle karna chahiye.
+
+## 6. Hashing vs encryption
+
+- **Hashing:** Password ko one-way representation mein convert karna.
+- **Encryption:** Data ko key ki madad se encrypt aur authorized decryption ke through recover karna.
+
+Passwords ko database mein plain text ya reversible encryption ke form mein store nahi karna chahiye. Password hashing is use case ke liye appropriate hai.
+
+## 7. Is file ki limitations
+
+Ye file abhi khud user register nahi karti aur database query bhi nahi chalati. Ye sirf password hashing aur verification functions provide karti hai.
+
+Complete registration flow ke liye repository mein user insert operation aur service mein registration rules connect karne honge. Login ke liye verification result ko authentication logic mein use karna hoga.
+
+## 8. Revision questions
+
+1. Hashing aur encryption mein kya difference hai?
+2. `PasswordHash.recommended()` kya return karta hai?
+3. `hash_password()` ka return type kya hai?
+4. `verify_password()` ko do passwords ki jagah plain password aur stored hash kyun chahiye?
+5. Kya password hash ko plain-text password ki tarah protect karna zaroori hai?
+
