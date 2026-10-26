@@ -1,0 +1,128 @@
+# AU Hub — User Repository Explanation
+
+## 1. Repository ka purpose
+
+`backend/app/repositories/user_repository.py` database operations ko ek dedicated location mein rakhta hai.
+
+AU Hub mein hum responsibilities separate rakh rahe hain:
+
+- Schema: incoming aur outgoing data ka structure.
+- Repository: database queries aur records access karna.
+- API endpoint: HTTP requests receive karna aur responses return karna.
+- Password hashing/authentication service: passwords aur identity verification handle karna.
+
+Is separation se code ko test, maintain aur extend karna easier hota hai.
+
+## 2. Import statements
+
+`from typing import Any`
+
+`Any` Python type hint hai jo kisi bhi type ke value ko represent kar sakta hai.
+
+Is file mein database row dictionary ke values alag-alag types ki ho sakti hain: `id` integer, `email` string, `is_active` boolean-like value, aur timestamps date/time values ho sakti hain.
+
+`from backend.app.db.connection import get_db_connection`
+
+Ye existing database connection module se `get_db_connection()` function import karta hai. Repository apni taraf se database credentials define nahi karti; connection configuration existing module se aati hai.
+
+## 3. Function definition
+
+`def get_user_by_email(email: str) -> dict[str, Any] | None:`
+
+- `def` Python mein function define karta hai.
+- `get_user_by_email` function ka naam hai.
+- `email: str` indicate karta hai ki email argument expected string hai.
+- `dict[str, Any] | None` return type batata hai: function dictionary return kar sakta hai ya `None`.
+- `None` ka matlab hai ki matching record nahi mila.
+
+Ye type hint hai; ye apne aap email validation ya database result ki correctness guarantee nahi karta.
+
+## 4. Database connection
+
+`connection = get_db_connection()`
+
+Ye configured database se connection establish karta hai. Agar connection establish nahi ho paata, toh underlying connector exception raise kar sakta hai.
+
+Connection ko `try/finally` structure mein manage kiya gaya hai taaki query complete hone ke baad cleanup ho.
+
+## 5. Cursor
+
+`cursor = connection.cursor(dictionary=True)`
+
+Cursor SQL queries execute karne aur results retrieve karne ka interface hai.
+
+`dictionary=True` ka matlab hai ki fetched row dictionary format mein milegi. Isse columns ko unke names se access karna convenient hota hai, jaise `user["email"]`.
+
+## 6. SQL SELECT query
+
+Query users table se ye columns read karti hai:
+
+- `id`
+- `full_name`
+- `email`
+- `password_hash`
+- `role`
+- `is_active`
+- `created_at`
+- `updated_at`
+
+`FROM users` batata hai ki records kis table se read karne hain.
+
+`WHERE email = %s` email ke basis par matching record filter karta hai.
+
+`LIMIT 1` result ko maximum ek row tak limit karta hai. Database mein email unique constraint bhi hai, isliye normal schema ke under ek email ke liye maximum ek matching user hona chahiye.
+
+## 7. Parameterized query
+
+`(email,)`
+
+Ye query ko parameter tuple deta hai. Tuple mein ek item hone par trailing comma zaroori hai.
+
+`%s` connector ka parameter placeholder hai. Connector parameter ko query ke saath safely bind karta hai. Email ko f-string ya string concatenation se SQL mein embed nahi karna chahiye, kyunki untrusted input se SQL injection ka risk ho sakta hai.
+
+## 8. Result retrieve karna
+
+`return cursor.fetchone()`
+
+`fetchone()` ek matching row return karta hai. Agar koi row nahi milti, toh `None` return hota hai.
+
+Returned dictionary mein `password_hash` bhi included hai, kyunki future authentication logic ko password verification ke liye hash ki zaroorat ho sakti hai.
+
+Important: Is raw repository result ko directly public API response mein return nahi karna chahiye. Public response ko `UserResponse` jaise safe schema se serialize karna chahiye, jismein `password_hash` field nahi hai.
+
+## 9. Resource cleanup
+
+Inner `finally` mein `cursor.close()` cursor ko release karta hai.
+
+Outer `finally` mein `connection.close()` database connection ko close karta hai.
+
+`finally` block normal completion aur exception, dono cases mein execute hota hai. Isse database resources ko unnecessarily open chhodne ka risk kam hota hai.
+
+## 10. Security aur design considerations
+
+- SQL parameters use karna SQL injection risk ko reduce karta hai.
+- Repository mein password hashing ya authentication perform nahi hota.
+- `password_hash` sensitive information hai; logs ya API response mein expose nahi karna chahiye.
+- Email validation API schema ki responsibility hai.
+- Database connection failure ko calling service ya endpoint ko properly handle karna hoga.
+- Is initial implementation mein har call apna connection kholti aur close karti hai. Larger deployments mein connection pooling useful ho sakti hai.
+
+## 11. Current limitations
+
+Ye function sirf user ko email se search karta hai. Ye user create/update/delete nahi karta aur account login nahi karata.
+
+Abhi koi signup endpoint is function ko call nahi kar raha. Database integration ko end-to-end test karne ke liye future mein service aur API endpoint add karne honge.
+
+## 12. Revision questions
+
+1. Repository ka purpose kya hai?
+2. `get_db_connection()` ka use kyun karte hain?
+3. `dictionary=True` ka kya effect hai?
+4. SQL query mein `%s` aur `(email,)` ka kya role hai?
+5. `fetchone()` record na milne par kya return karta hai?
+6. `finally` blocks kyun use kiye gaye hain?
+7. Repository se milne wale `password_hash` ko API response mein directly kyun nahi bhejna chahiye?
+
+## Summary
+
+`get_user_by_email()` AU Hub database mein email ke basis par ek user record retrieve karta hai. Parameterized SQL, explicit result handling aur resource cleanup is implementation ke important parts hain. Ye repository layer ka initial read operation hai, complete authentication system nahi.
