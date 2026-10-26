@@ -2,16 +2,29 @@
 from fastapi import FastAPI, status
 from fastapi.responses import JSONResponse
 
+from backend.app.core.config import (
+    API_PREFIX,
+    APP_NAME,
+    APP_VERSION,
+)
 from backend.app.db.connection import check_database_connection
+from backend.app.routes.auth import router as auth_router
+
 
 app = FastAPI(
-    title="AU Hub API",
+    title=f"{APP_NAME} API",
     description=(
         "Learning, collaboration, academic resources, "
         "quizzes, and machine learning for the "
         "Amrapali University community."
     ),
-    version="0.1.0",
+    version=APP_VERSION,
+)
+
+
+app.include_router(
+    auth_router,
+    prefix=API_PREFIX,
 )
 
 
