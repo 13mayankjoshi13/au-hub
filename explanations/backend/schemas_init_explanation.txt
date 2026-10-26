@@ -1,0 +1,75 @@
+AU HUB — SCHEMAS PACKAGE KI EXPLANATION
+
+File path: backend/app/schemas/__init__.py
+
+==================================================
+1. SCHEMA KYA HOTA HAI?
+==================================================
+
+Schema ek defined structure hota hai jo batata hai ki data ka expected format kya hai.
+
+Example ke liye, AU Hub mein user signup request mein ye fields ho sakti hain:
+
+- full_name
+- email
+- password
+
+Humein define karna hota hai ki kaunse fields required hain aur unki values kis type ki honi chahiye.
+
+FastAPI projects mein Pydantic models ka use request aur response data ko validate aur structure karne ke liye commonly hota hai.
+
+==================================================
+2. __init__.py KA PURPOSE
+==================================================
+
+`__init__.py` Python package ki initialization file hai.
+
+Is file ko empty rakhna valid hai. Abhi ismein koi code add karna zaroori nahi.
+
+Iska hona apne aap schemas create nahi karta aur na hi data validation start karta hai.
+
+==================================================
+3. SCHEMA AUR DATABASE TABLE MEIN DIFFERENCE
+==================================================
+
+Schema:
+API ke through aane ya jaane wale data ka expected structure define kar sakta hai.
+
+Database table:
+Database mein records ko persistently store karti hai.
+
+Example:
+
+Signup request mein password field hona aur database mein password hash store karna do alag concerns hain.
+
+API schema input ko validate karne mein help karta hai. Database model/table persistent storage define karti hai.
+
+==================================================
+4. FUTURE EXAMPLE
+==================================================
+
+Future mein hum ek file bana sakte hain:
+
+schemas/user.py
+
+Usmein Pydantic model define ho sakta hai jo signup ya user response data ka structure specify kare.
+
+Ye sirf planned example hai. Abhi user schema implement nahi kar rahe.
+
+==================================================
+5. IMPORTANT SECURITY POINT
+==================================================
+
+Password jaise sensitive fields ko response mein wapas expose nahi karna chahiye.
+
+Request validation aur secure password storage alag responsibilities hain. Password ko database mein plain text mein store nahi karna chahiye; suitable password hashing use karni chahiye.
+
+==================================================
+SUMMARY
+==================================================
+
+backend/app/schemas/__init__.py ko abhi empty rakhenge.
+
+Ye Python package structure ko explicit banati hai. Actual request/response validation tab implement hogi jab hum concrete Pydantic schemas banayenge.
+
+END OF EXPLANATION
