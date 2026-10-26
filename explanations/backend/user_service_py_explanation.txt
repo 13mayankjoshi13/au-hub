@@ -1,149 +1,196 @@
-# User Service — Password Hashing and Verification
+# User Service — Registration Business Logic
 
-## 1. Is file ka purpose
+## 1. Service layer ka purpose
 
-`backend/app/services/user_service.py` password security se related functions provide karti hai.
+`backend/app/services/user_service.py` registration ke business rules handle karti hai.
 
-Is file mein do main operations hain:
+Is file mein:
+- Password hashing aur verification functions hain.
+- Existing email check hota hai.
+- Password hash karke repository ko diya jata hai.
+- Duplicate email condition handle hoti hai.
+- Public user response return hota hai.
 
-1. `hash_password()` — original password ko secure hash mein convert karna.
-2. `verify_password()` — login ke waqt check karna ki entered password stored hash se match karta hai ya nahi.
+Repository SQL aur database operations handle karti hai. Service decide karti hai ki registration kis order mein aur kin rules ke according execute hoga.
 
-Password hashing aur password encryption same cheez nahi hain. Hashing one-way operation hota hai; normally stored hash se original password recover nahi kiya ja sakta.
+## 2. Imports
 
-## 2. Import statement
+```python
+from mysql.connector import IntegrityError
+```
+
+`IntegrityError` MySQL connector ki exception class hai. Database constraints violate hone par, jaise unique email duplicate hone par, ye exception aa sakti hai.
 
 ```python
 from pwdlib import PasswordHash
 ```
 
-`pwdlib` ek Python library hai jo password hashing aur verification provide karti hai.
+`PasswordHash` password hashing aur verification ke liye use hota hai.
 
-`PasswordHash` iska class hai. Iske through hum recommended password-hashing configuration use karenge.
-
-Is library ko install karne ke liye:
+Dependency install karne ke liye:
 
 ```powershell
 python -m pip install "pwdlib[argon2]"
 ```
 
-`argon2` extra Argon2 hashing support install karta hai.
+```python
+from backend.app.repositories.user_repository import (
+    create_user,
+    get_user_by_email,
+)
+```
 
-## 3. Password hasher object
+`get_user_by_email()` existing account check karta hai. `create_user()` database mein naya user insert karta hai.
+
+```python
+from backend.app.schemas.user import UserCreate, UserResponse
+```
+
+- `UserCreate`: incoming registration data aur validation.
+- `UserResponse`: client ko return hone wali public user information.
+
+## 3. Password hasher
 
 ```python
 password_hasher = PasswordHash.recommended()
 ```
 
-Yahan `PasswordHash.recommended()` recommended password-hashing configuration ka object banata hai.
-
-`password_hasher` variable ko hum dono functions mein reuse karte hain.
-
-Har user ke liye alag hasher object banane ki zaroorat nahi hai. Har password hash operation apne salt aur encoded hash data ko handle karta hai.
-
-## 4. `hash_password()` function
+Ye recommended password-hashing configuration ka object create karta hai.
 
 ```python
 def hash_password(password: str) -> str:
+    return password_hasher.hash(password)
 ```
 
-- `def` Python mein function define karta hai.
-- `hash_password` function ka naam hai.
-- `password: str` batata hai ki expected input string hai.
-- `-> str` batata hai ki function string return karta hai.
+Ye function plain-text password ko encoded password hash mein convert karta hai.
 
-Python type hints helpful documentation aur tooling provide karte hain; ye apne aap runtime input validation enforce nahi karte.
-
-```python
-"""Convert a plain-text password into a secure password hash."""
-```
-
-Ye docstring hai. Ismein function ka purpose explain kiya gaya hai.
-
-```python
-return password_hasher.hash(password)
-```
-
-Ye line input password ka secure hash generate karke return karti hai.
-
-Example:
-
-```python
-stored_hash = hash_password("ExamplePassword123!")
-print(stored_hash)
-```
-
-Output ek encoded password hash hoga. Exact value har run mein alag ho sakti hai, kyunki password hashing mein salt use hota hai.
-
-**Important:** Real passwords ya unke hashes ko terminal screenshots, public logs, ya GitHub par share mat karna.
-
-## 5. `verify_password()` function
+Database mein original password store nahi karna chahiye.
 
 ```python
 def verify_password(
     plain_password: str,
     hashed_password: str,
 ) -> bool:
+    return password_hasher.verify(plain_password, hashed_password)
 ```
 
-Function do arguments leta hai:
+Ye function entered password ko stored hash ke against verify karta hai. Login flow mein iska use hoga.
 
-- `plain_password`: login form mein user ka entered password.
-- `hashed_password`: database mein stored hash.
+Malformed stored hashes ke liye verification exception raise kar sakta hai. Authentication layer ko aise errors safely handle karne honge.
 
-`-> bool` ka matlab hai ki function boolean result return karne ke liye designed hai: `True` ya `False`.
+## 4. Duplicate-email exception
 
 ```python
-"""Check whether a plain-text password matches its stored hash."""
+class EmailAlreadyRegisteredError(Exception):
+    """Raised when an email address is already registered."""
 ```
 
-Ye docstring function ka purpose batata hai.
+Hum ek custom exception define karte hain. Jab email pehle se registered ho, service ye exception raise kar sakti hai.
+
+Custom exception ka benefit ye hai ki API layer duplicate registration ko database error ki jagah understandable client response mein convert kar sakti hai.
+
+## 5. `register_user()` function
 
 ```python
-return password_hasher.verify(plain_password, hashed_password)
+def register_user(user_data: UserCreate) -> UserResponse:
 ```
 
-`verify()` entered password ko stored hash ke against check karta hai. Iske liye stored hash se original password decrypt nahi kiya jata.
+Function `UserCreate` object accept karta hai aur `UserResponse` return karne ke liye designed hai.
 
-Example:
+`user_data` mein validated registration fields hote hain. Type hint useful documentation hai; runtime validation schema aur Pydantic provide karte hain.
 
 ```python
-hashed = hash_password("ExamplePassword123!")
+existing_user = get_user_by_email(str(user_data.email))
+```
 
-is_correct = verify_password(
-    "ExamplePassword123!",
-    hashed,
+Repository database mein matching email search karti hai.
+
+`str()` email value ko string representation mein convert karta hai, jo database query ko pass ki jati hai.
+
+```python
+if existing_user is not None:
+    raise EmailAlreadyRegisteredError(
+        "An account with this email already exists."
+    )
+```
+
+Agar account milta hai, toh registration yahin stop ho jata hai. Duplicate account create karne ki koshish nahi hoti.
+
+## 6. Password hash aur database insertion
+
+```python
+hashed_password = hash_password(user_data.password)
+```
+
+Original password ko hash kiya jata hai.
+
+```python
+created_user = create_user(
+    full_name=user_data.full_name,
+    email=str(user_data.email),
+    password_hash=hashed_password,
 )
-
-print(is_correct)
 ```
 
-Expected result:
+Repository ko naam, email aur **hashed password** diya jata hai.
 
-```text
-True
+Plain-text password database repository ko pass nahi kiya jata.
+
+## 7. Database duplicate-key handling
+
+```python
+except IntegrityError as error:
 ```
 
-Agar entered password match nahi karta, verification false result de sakta hai. Invalid ya malformed stored hash ke liye library exception bhi raise kar sakti hai; production authentication flow mein aise errors ko safely handle karna chahiye.
+Database insertion ke waqt integrity-related error aane par ye block execute hota hai.
 
-## 6. Hashing vs encryption
+```python
+if error.errno == 1062:
+```
 
-- **Hashing:** Password ko one-way representation mein convert karna.
-- **Encryption:** Data ko key ki madad se encrypt aur authorized decryption ke through recover karna.
+MySQL error code `1062` duplicate-key error ko identify karta hai.
 
-Passwords ko database mein plain text ya reversible encryption ke form mein store nahi karna chahiye. Password hashing is use case ke liye appropriate hai.
+Pehle email check karna helpful hai, lekin do simultaneous registration requests dono ko initial check par email unavailable na mile, aisa ho sakta hai. Database ka `UNIQUE` constraint final protection provide karta hai.
 
-## 7. Is file ki limitations
+```python
+raise EmailAlreadyRegisteredError(
+    "An account with this email already exists."
+) from error
+```
 
-Ye file abhi khud user register nahi karti aur database query bhi nahi chalati. Ye sirf password hashing aur verification functions provide karti hai.
+Duplicate-key error ko service ke custom exception mein convert kiya jata hai. `from error` original exception ko cause ke roop mein preserve karta hai.
 
-Complete registration flow ke liye repository mein user insert operation aur service mein registration rules connect karne honge. Login ke liye verification result ko authentication logic mein use karna hoga.
+```python
+raise
+```
 
-## 8. Revision questions
+Agar error duplicate-key error nahi hai, toh use hide nahi karte. Unexpected database failures ko API layer safely handle karegi.
 
-1. Hashing aur encryption mein kya difference hai?
-2. `PasswordHash.recommended()` kya return karta hai?
-3. `hash_password()` ka return type kya hai?
-4. `verify_password()` ko do passwords ki jagah plain password aur stored hash kyun chahiye?
-5. Kya password hash ko plain-text password ki tarah protect karna zaroori hai?
+## 8. Public response
 
+```python
+return UserResponse.model_validate(created_user)
+```
+
+Database se mila record `UserResponse` schema mein convert hota hai.
+
+Public response mein `id`, `full_name`, `email`, `role` aur `is_active` jaise fields hote hain. `password_hash` return nahi hota.
+
+`model_validate()` Pydantic v2 ka method hai. Isliye project mein Pydantic v2 installed hona chahiye.
+
+## 9. Important limitations
+
+- Ye service abhi khud HTTP endpoint nahi hai.
+- API route ko `EmailAlreadyRegisteredError` ko HTTP `409 Conflict` response mein convert karna hoga.
+- Unexpected database errors ko controlled HTTP error mein handle karna hoga.
+- Password hashing ke baad bhi HTTPS, secure secrets management, rate limiting aur account-abuse protection zaroori hain.
+- Service ko database ke saath integration test karna abhi baaki hai.
+
+## 10. Revision questions
+
+1. Service aur repository mein kya difference hai?
+2. Password database mein insert hone se pehle hash kyun hota hai?
+3. Initial email check ke baad bhi unique database constraint kyun chahiye?
+4. MySQL error `1062` kya indicate karta hai?
+5. `UserResponse` public response mein password hash kyun include nahi karta?
+6. Duplicate email ko API mein kis HTTP status code se represent karna suitable hoga?
