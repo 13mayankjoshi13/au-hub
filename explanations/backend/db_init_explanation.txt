@@ -1,0 +1,77 @@
+AU HUB — DATABASE PACKAGE KI EXPLANATION
+
+File path: backend/app/db/__init__.py
+
+==================================================
+1. DB FOLDER KYA HAI?
+==================================================
+
+`db` ka matlab database hai.
+
+AU Hub ko future mein MySQL database ke saath kaam karna hoga. Database mein users, courses, quizzes, learning resources aur doosra application data store ho sakta hai.
+
+Hum database-related Python code ko `backend/app/db/` folder mein organize karenge.
+
+==================================================
+2. __init__.py KA PURPOSE
+==================================================
+
+`__init__.py` Python package ki initialization file hai.
+
+Is file ko empty rakhna valid hai. Abhi humein ismein koi initialization code likhne ki zaroorat nahi hai.
+
+Is file ka hona database connection create nahi karta.
+
+==================================================
+3. DATABASE AUR DATABASE CODE MEIN DIFFERENCE
+==================================================
+
+Database:
+Ek jagah jahan structured application data store hota hai.
+
+Database connection:
+Application aur database server ke beech communication establish karne ka mechanism.
+
+Database code:
+Python code jo connection, queries aur database operations manage karta hai.
+
+Abhi hum sirf folder structure prepare kar rahe hain. MySQL connection abhi implement nahi hua hai.
+
+==================================================
+4. FUTURE STRUCTURE
+==================================================
+
+Is folder mein future mein aisi files aa sakti hain:
+
+db/
+    __init__.py
+    session.py
+    base.py
+
+Possible responsibilities:
+
+`session.py`
+Database engine aur sessions configure karne ke liye.
+
+`base.py`
+Database models ke shared base ya metadata organize karne ke liye, depending on the ORM architecture we choose.
+
+Ye planned examples hain; abhi ye files create nahi karni hain.
+
+==================================================
+5. SECURITY NOTE
+==================================================
+
+Database username, password aur doosre secrets ko source code mein hardcode karna avoid karna chahiye.
+
+Future mein environment variables aur suitable settings management use karenge.
+
+==================================================
+SUMMARY
+==================================================
+
+backend/app/db/__init__.py ko abhi empty rakhenge.
+
+Ye database package structure ko explicit banati hai. Isse apne aap MySQL connect nahi hota, tables create nahi hoti aur queries execute nahi hoti.
+
+END OF EXPLANATION
