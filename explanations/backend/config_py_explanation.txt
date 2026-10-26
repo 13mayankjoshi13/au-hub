@@ -1,0 +1,62 @@
+AU HUB — CONFIGURATION FILE EXPLANATION
+
+FILE: backend/app/core/config.py
+
+PURPOSE
+
+This file stores application-level configuration constants in one central location.
+
+1. APP_NAME
+
+Code:
+APP_NAME = "AU Hub"
+
+`APP_NAME` is a Python variable containing the application's display name.
+
+The equals sign assigns the string "AU Hub" to the variable.
+
+Centralizing the name avoids repeating the same value in multiple files.
+
+2. APP_VERSION
+
+Code:
+APP_VERSION = "0.1.0"
+
+This variable stores the application's version as a string.
+
+The version can later be used in API metadata, diagnostics, or application information.
+
+It is separate from the Python, FastAPI, and Uvicorn versions.
+
+3. API_PREFIX
+
+Code:
+API_PREFIX = "/api/v1"
+
+This variable defines a planned common URL prefix for version 1 of the API.
+
+For example, future endpoints could use paths such as:
+- /api/v1/users
+- /api/v1/products
+
+Defining a prefix does not automatically create routes or change existing endpoints. The application must explicitly use this constant when registering routes.
+
+4. WHY USE A CONFIGURATION FILE?
+
+As the project grows, configuration values can otherwise become scattered across multiple files.
+
+A central configuration module makes values easier to find, update, and reuse.
+
+5. WHY IS THIS FILE INSIDE core?
+
+The `core` directory is intended for foundational application components, such as settings, security configuration, and shared infrastructure.
+
+6. CURRENT LIMITATIONS
+
+- These are ordinary Python constants, not a validated settings system.
+- No environment variables are read yet.
+- No secrets or database credentials are stored here.
+- `main.py` does not currently import these constants.
+- The API prefix is planned but not yet applied to any routes.
+
+END OF EXPLANATION
