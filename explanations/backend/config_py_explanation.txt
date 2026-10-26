@@ -1,524 +1,236 @@
+
 AU HUB — CONFIGURATION FILE KI COMPLETE EXPLANATION
 
-File ka naam: config.py
-File ka path: backend/app/core/config.py
+1. CONFIGURATION FILE KYA HOTI HAI?
 
-Language: Python
+Configuration file mein application ki settings rakhi jaati hain.
 
-==================================================
-1. SABSE PEHLE: CONFIGURATION KYA HOTI HAI?
-==================================================
+AU Hub mein humein application ka naam, version, API prefix aur MySQL
+database ki connection settings chahiye hongi.
 
-Configuration ka simple meaning hai application ki settings.
+In settings ko ek jagah rakhne se unhe manage karna easier hota hai.
+Agar future mein database host ya port change hota hai, toh hum settings
+ko central configuration file ya environment variables se update kar sakte hain.
 
-Example ke liye, AU Hub mein humein ye information chahiye ho sakti hai:
-
-- Application ka naam kya hai?
-- Application ka version kya hai?
-- API routes kis common prefix se start honge?
-- Database se connect karne ke liye kaunsi settings use hongi?
-- Development aur production environment mein kaunsi settings alag hongi?
-
-Agar hum ye saari values alag-alag files mein likhenge, toh future mein unhe update karna difficult ho sakta hai.
-
-Isliye hum configuration se related values ko ek central jagah par rakhte hain.
-
-Hamari file ka path hai:
-
+File path:
 backend/app/core/config.py
 
-Is path ko samjho:
-
-- backend: hamare project ka Python backend.
-- app: FastAPI application ka Python package.
-- core: application ke foundational components ke liye folder.
-- config.py: configuration values rakhne wali Python file.
-
-Abhi is file mein sirf basic constants hain. Future mein zaroorat ke according hum proper settings management bhi add kar sakte hain.
-
-==================================================
-2. HAMARA COMPLETE CODE
-==================================================
-
-APP_NAME = "AU Hub"
-APP_VERSION = "0.1.0"
-API_PREFIX = "/api/v1"
-
-Ye code chhota hai, lekin ismein Python variables, assignment operator aur strings jaise important concepts hain.
-
-Ab har line ko detail mein samajhte hain.
-
-==================================================
-3. LINE 1: APP_NAME = "AU Hub"
-==================================================
+2. import os
 
 Code:
+import os
 
-APP_NAME = "AU Hub"
+Python ka os module operating system ke saath interact karne ki
+functionality provide karta hai.
 
-Is line ka purpose AU Hub application ka naam ek variable mein store karna hai.
+Is file mein hum os.getenv() use karenge, jo operating system se
+environment variable ki value read karta hai.
 
-Aao ise pieces mein samjhein.
-
-A) APP_NAME
-
-APP_NAME ek variable ka naam hai.
-
-Variable ko simple language mein ek named reference samajh sakte ho, jiske through hum kisi value ko access karte hain.
-
-Yahan APP_NAME ki value "AU Hub" hai.
-
-Hum variable ka naam APP_NAME isliye rakh rahe hain kyunki ye application ka naam represent karta hai.
-
-B) =
-
-Python mein single equals sign assignment operator hai.
-
-Assignment ka meaning hai kisi value ko variable ke naam ke saath assign karna.
+Environment variable ek setting hoti hai jo application ke code ke
+bahar define ki ja sakti hai.
 
 Example:
+AU_HUB_DB_HOST=127.0.0.1
 
-course = "Cybersecurity"
+Isse database host ki setting Python source code se alag rakhi ja sakti hai.
 
-Yahan course variable ko "Cybersecurity" string assign hui.
-
-Isi tarah:
-
-APP_NAME = "AU Hub"
-
-Yahan APP_NAME ko "AU Hub" assign hua.
-
-Important difference:
-
-`=` assignment ke liye use hota hai.
-
-`==` comparison ke liye use hota hai.
-
-Example:
-
-course = "Cybersecurity"
-
-Ye value assign karta hai.
-
-course == "Cybersecurity"
-
-Ye check karta hai ki course ki value "Cybersecurity" ke equal hai ya nahi. Result True ya False ho sakta hai.
-
-C) "AU Hub"
-
-Double quotes ke andar likhi hui text value Python mein string hoti hai.
-
-String ka matlab text data.
-
-Examples:
-
-"AU Hub"
-"Amrapali University"
-"Python"
-"/api/v1"
-
-Ye sab strings hain.
-
-Agar hum likhen:
-
-APP_NAME = "AU Hub"
-
-Toh variable mein application ka naam text ke roop mein store hota hai.
-
-D) APP_NAME uppercase mein kyun hai?
-
-Python mein constants ke naam conventionally uppercase letters mein likhe jaate hain.
-
-Example:
-
-APP_NAME
-APP_VERSION
-API_PREFIX
-
-Ye naming convention batata hai ki ye values configuration constants hain, jinhe aam taur par code ke dauran change karne ka intention nahi hai.
-
-Dhyan rahe: Python uppercase naam hone ki wajah se value ko automatically immutable ya unchangeable nahi bana deta. Ye ek convention hai, language restriction nahi.
-
-E) Is line ka practical benefit kya hai?
-
-Maan lo future mein AU Hub ka display name update karna ho.
-
-Agar naam bahut saari files mein hardcode kiya hai, toh multiple files edit karni pad sakti hain.
-
-Central configuration value hone par hum naam ki ek shared definition rakh sakte hain aur zaroorat ke hisaab se doosri files mein import karke use kar sakte hain.
-
-Important: Abhi hamari main.py file APP_NAME ko import ya use nahi karti. Sirf variable define karne se doosri files automatically ise use nahi karne lagti.
-
-==================================================
-4. LINE 2: APP_VERSION = "0.1.0"
-==================================================
+3. APP_NAME
 
 Code:
-
-APP_VERSION = "0.1.0"
-
-Is line ka purpose application ki version string store karna hai.
-
-A) APP_VERSION kya hai?
-
-Ye ek Python variable hai jo AU Hub application ki version value rakhta hai.
-
-Abhi iski value:
-
-"0.1.0"
-
-B) Version ke three parts ko samjho
-
-Software versioning mein aksar MAJOR.MINOR.PATCH format use kiya jaata hai.
-
-Example:
-
-2.4.7
-
-Common interpretation:
-
-- MAJOR: 2 — bade changes ya breaking changes.
-- MINOR: 4 — generally naye features jo backward compatibility maintain karte hain.
-- PATCH: 7 — generally bug fixes aur chhote corrections.
-
-Hamari current value:
-
-0.1.0
-
-Ismein:
-- Major = 0
-- Minor = 1
-- Patch = 0
-
-Early-stage projects mein 0.x versions commonly indicate karti hain ki software abhi initial development phase mein hai.
-
-Ye ek convention hai; har project ka versioning policy alag ho sakta hai.
-
-C) Kya APP_VERSION Python version hai?
-
-Nahi.
-
-APP_VERSION = "0.1.0"
-
-AU Hub application ki apni version string hai.
-
-Python version alag hota hai, jaise hamare development environment mein Python 3.10.0.
-
-FastAPI aur Uvicorn ke package versions bhi alag hain.
-
-In sabko confuse mat karna:
-
-- Python version: Python interpreter ka version.
-- FastAPI version: FastAPI package ka version.
-- Uvicorn version: Uvicorn package ka version.
-- APP_VERSION: AU Hub application ki version string.
-
-D) Version ko string mein kyun rakha hai?
-
-Humne "0.1.0" quotes ke andar likha hai, isliye Python ise string ke roop mein treat karta hai.
-
-Version identifiers ko strings mein rakhna convenient hota hai, kyunki unhe numerical calculations karne ke liye use nahi kiya ja raha.
-
-E) Kya abhi API documentation mein ye version show hoga?
-
-Abhi automatically nahi.
-
-Hamari main.py mein pehle se ye code hai:
-
-app = FastAPI(
-    title="AU Hub API",
-    description=(
-        "Learning, collaboration, academic resources, "
-        "quizzes, and machine learning for the "
-        "Amrapali University community."
-    ),
-    version="0.1.0",
-)
-
-Yahan version directly FastAPI ko diya gaya hai.
-
-APP_VERSION ko define karne se main.py apne aap usse use nahi karegi. Future mein hum main.py ko update karke configuration se value import kar sakte hain.
-
-==================================================
-5. LINE 3: API_PREFIX = "/api/v1"
-==================================================
-
-Code:
-
-API_PREFIX = "/api/v1"
-
-Ye variable future API routes ke liye common URL prefix define karta hai.
-
-A) API kya hoti hai?
-
-API ka full form Application Programming Interface hai.
-
-Simple terms mein, API ek defined interface hai jiske through ek software doosre software se communicate kar sakta hai.
-
-AU Hub mein frontend aur backend ko communicate karna hoga.
-
-Example:
-
-Frontend request bhej sakta hai ki user ke courses fetch karo.
-
-Backend request process karke response return karega.
-
-B) Endpoint kya hota hai?
-
-Endpoint API ka ek particular accessible path hota hai.
-
-Hamare current main.py mein do GET endpoints hain:
-
-/
- /health
-
-Local development mein ye URLs hain:
-
-http://127.0.0.1:8000/
-http://127.0.0.1:8000/health
-
-C) Prefix ka meaning kya hai?
-
-Prefix kisi path ke beginning mein aane wala common part hota hai.
-
-Hamari value:
-
-"/api/v1"
-
-Future examples:
-
-/api/v1/users
-/api/v1/courses
-/api/v1/quizzes
-/api/v1/resources
-
-In sab paths mein common prefix "/api/v1" hai.
-
-D) API mein v1 kyun likhte hain?
-
-"v1" ka meaning API version 1 hai.
-
-Future mein API ka design significantly change hota hai aur compatibility maintain karna zaroori hota hai, toh kuch projects "/api/v2" jaise naye paths introduce karte hain.
-
-Har project ko multiple API versions ki zaroorat nahi hoti, lekin prefix versioning ek common design approach hai.
-
-E) Kya sirf API_PREFIX define karne se routes change ho jayenge?
-
-Nahi.
-
-Ye bahut important point hai.
-
-API_PREFIX = "/api/v1"
-
-Sirf ek string variable define karta hai.
-
-Jab tak FastAPI application ise routes register karte waqt use nahi karti, tab tak existing routes change nahi honge.
-
-Hamare current endpoints abhi bhi ye hain:
-
-/
- /health
-
-Ye abhi automatically inmein convert nahi honge:
-
-/api/v1/
-/api/v1/health
-
-Routes ko prefix ke saath register karne ke liye application code mein actual configuration aur routing changes karne honge.
-
-Hum ye change tab karenge jab API structure ko formally organize karenge.
-
-==================================================
-6. YE TEENON LINES MILKAR KYA KARTI HAIN?
-==================================================
-
-Code:
-
 APP_NAME = "AU Hub"
+
+Yahan APP_NAME naam ka variable create kiya gaya hai.
+
+Variable ek naam hota hai jiske through hum kisi value ko access karte hain.
+
+"AU Hub" ek string hai, yaani text value.
+
+Application ka naam future mein logs, API documentation ya doosri
+settings mein reuse kiya ja sakta hai.
+
+Abhi ye variable tabhi effect karega jab koi code ise import karke use karega.
+
+4. APP_VERSION
+
+Code:
 APP_VERSION = "0.1.0"
+
+Ye application version store karta hai.
+
+Version number ka ek common format MAJOR.MINOR.PATCH hota hai.
+
+0.1.0 ek initial development version ko represent kar sakta hai.
+Iska exact meaning project ki versioning policy par depend karega.
+
+Version ko string rakha gaya hai, kyunki ye version identifier hai,
+mathematical number nahi.
+
+5. API_PREFIX
+
+Code:
 API_PREFIX = "/api/v1"
 
-Step-by-step:
-
-1. Python pehli line execute karta hai.
-2. APP_NAME variable ko "AU Hub" assign hota hai.
-3. Python doosri line execute karta hai.
-4. APP_VERSION ko "0.1.0" assign hota hai.
-5. Python teesri line execute karta hai.
-6. API_PREFIX ko "/api/v1" assign hota hai.
-
-Iske baad current Python module mein ye teen names defined hote hain.
-
-Abhi ye file khud koi HTTP request process nahi karti, koi server start nahi karti aur database se connect nahi karti.
-
-Ye sirf values define karti hai, jinhe doosre modules import karke use kar sakte hain.
-
-==================================================
-7. DOOSRI FILE MEIN IN VALUES KO KAISE USE KAR SAKTE HAIN?
-==================================================
+Ye future API routes ke liye proposed common prefix hai.
 
 Example:
+ /api/v1/students
+ /api/v1/resources
 
-from backend.app.core.config import APP_NAME
-
-print(APP_NAME)
-
-Explanation:
-
-`from backend.app.core.config import APP_NAME`
-
-- `from` batata hai ki humein kis module se import karna hai.
-- `backend.app.core.config` Python module ka path hai.
-- `import APP_NAME` us module se APP_NAME name ko import karta hai.
-
-`print(APP_NAME)`
-
-- `print()` Python ka built-in function hai.
-- Ye variable ki value output mein display karta hai.
-
-Expected output:
-
-AU Hub
+Isse API ke version ko route structure mein represent kiya ja sakta hai.
 
 Important:
-Ye sirf learning example hai. Abhi ise main.py mein add karne ki zaroorat nahi.
+Sirf API_PREFIX variable define karne se existing routes automatically
+change nahi honge. Jab hum ise FastAPI routers mein use karenge,
+tab iska practical effect hoga.
 
-==================================================
-8. FILE KA NAAM config.py KYUN HAI?
-==================================================
+6. DB_HOST
 
-Python source files aam taur par `.py` extension use karti hain.
+Code:
+DB_HOST = os.getenv("AU_HUB_DB_HOST", "127.0.0.1")
 
-`config` filename ka descriptive part hai.
+os.getenv() do important arguments le raha hai.
 
-Isliye:
+Pehla argument:
+"AU_HUB_DB_HOST"
 
-config.py
+Ye environment variable ka naam hai jahan se host ki setting read hogi.
 
-Configuration se related Python code ke liye ek clear naam hai.
+Doosra argument:
+"127.0.0.1"
 
-Isi tarah:
-- main.py: application entry point.
-- config.py: configuration values.
-- requirements.txt: Python dependencies ki list.
+Ye default value hai. Agar AU_HUB_DB_HOST set nahi hai, toh application
+localhost address use karegi.
 
-Har file ko uske purpose ke hisaab se meaningful naam dena maintainability improve karta hai.
+127.0.0.1 ka matlab current computer hai.
 
-==================================================
-9. core FOLDER KYUN BANAYA?
-==================================================
+Ye tab suitable hai jab MySQL isi computer par run kar raha ho.
+Remote database ke case mein host alag ho sakta hai.
 
-Hamari directory structure:
+7. DB_PORT
 
-backend/
-    app/
-        core/
-            config.py
+Code:
+DB_PORT = int(os.getenv("AU_HUB_DB_PORT", "3306"))
 
-`core` folder foundational application components ke liye hai.
+MySQL ka common default port 3306 hai.
 
-Future mein ismein settings, security-related configuration aur doosre shared components aa sakte hain.
+os.getenv() environment variable ki value string ke roop mein deta hai.
 
-Lekin har project ka structure alag ho sakta hai. Folder name `core` hone se Python automatically koi special functionality apply nahi karta.
+Isliye int() us string ko integer mein convert karta hai.
 
-Ye organization ka decision hai.
+Example:
+"3306" -> 3306
 
-==================================================
-10. KYA IS FILE MEIN SENSITIVE INFORMATION RAKH SAKTE HAIN?
-==================================================
+Agar port ki environment variable mein invalid text diya gaya, toh
+int() ValueError raise karega. Is code mein custom validation abhi
+implement nahi ki gayi hai.
 
-Configuration file mein kuch settings ho sakti hain, lekin passwords, secret keys aur database credentials ko seedha source code mein hardcode karna avoid karna chahiye.
+8. DB_USER
 
-Example of what NOT to do:
+Code:
+DB_USER = os.getenv("AU_HUB_DB_USER", "root")
 
-DATABASE_PASSWORD = "my-real-password"
+Ye MySQL username read karta hai.
 
-Real credentials ko source code mein rakhne se woh Git history ya repository ke through expose ho sakte hain.
+Local development mein root account use ho sakta hai, agar tumhare
+MySQL installation mein ye account available ho.
 
-Future mein hum environment variables aur suitable settings management use karenge.
+Lekin production application ke liye dedicated database user banana
+better hai, jise sirf required database aur operations ki permissions hon.
 
-Abhi hamari file mein sirf non-sensitive application constants hain.
+Root account ko application mein use karna unnecessary privilege risk
+create kar sakta hai.
 
-==================================================
-11. COMMON MISTAKES
-==================================================
+9. DB_PASSWORD
 
-Mistake 1:
-APP_NAME == "AU Hub"
+Code:
+DB_PASSWORD = os.getenv("AU_HUB_DB_PASSWORD", "")
 
-Agar hum value assign karna chahte hain, toh `=` use karenge, `==` nahi.
+Ye database password environment variable se read karta hai.
 
-Mistake 2:
-APP_VERSION = 0.1.0
+Agar variable set nahi hai, toh default empty string use hogi.
 
-Ye valid version string nahi hai. Is format ko quotes mein likhna chahiye:
+Important security point:
+Empty password ka matlab secure authentication nahi hai.
+Ye default sirf local development configuration ke liye hai.
 
-APP_VERSION = "0.1.0"
+Real database password ko Python file, Git commit ya public GitHub
+repository mein hardcode nahi karna chahiye.
 
-Mistake 3:
-API_PREFIX define karke assume karna ki saare routes change ho gaye.
+Is code mein .env file automatically load nahi hoti.
+Agar hum .env file use karna chahenge, toh uske liye suitable loading
+mechanism separately configure karna hoga.
 
-Aisa nahi hota. Configuration variable ko code mein use bhi karna padta hai.
+10. DB_NAME
 
-Mistake 4:
-APP_VERSION ko Python version samajhna.
+Code:
+DB_NAME = os.getenv("AU_HUB_DB_NAME", "au_hub")
 
-Ye AU Hub ki version string hai, Python interpreter ka version nahi.
+Ye database ka naam read karta hai.
 
-==================================================
-12. ABHI KYA IMPLEMENTED HAI AUR KYA NAHI?
-==================================================
+Default naam "au_hub" rakha gaya hai.
 
-Implemented:
-- APP_NAME constant.
-- APP_VERSION constant.
-- API_PREFIX constant.
+Lekin is naam ko configuration mein likhne se database create nahi hota.
+MySQL server par database ko separately create karna hoga.
 
-Abhi implemented nahi:
-- Environment variables se settings load karna.
-- Database configuration.
-- Secret management.
-- API routes par prefix apply karna.
-- main.py ko in constants ka use karwana.
+Agar actual database ka naam different hai, toh environment variable
+ke through correct naam provide karna hoga.
 
-Ye distinction important hai: code mein variable define karna aur us variable ko application mein actually use karna do alag cheezein hain.
+11. ENVIRONMENT VARIABLES KYON USE KARTE HAIN?
 
-==================================================
-13. QUICK REVISION QUESTIONS
-==================================================
+Maan lo development machine par database ka naam au_hub hai, lekin
+testing server par database ka naam alag hai.
 
-1. Configuration ka simple meaning kya hai?
+Agar settings source code mein hardcode hongi, toh environment change
+karne ke liye code edit karna pad sakta hai.
 
-2. Python mein `=` aur `==` mein kya difference hai?
+Environment variables se hum same code ko different environments mein
+different settings ke saath run kar sakte hain.
 
-3. APP_NAME ki current value kya hai?
+Lekin environment variables ko bhi carefully manage karna chahiye.
+Unhe logs mein print karna ya accidentally expose karna avoid karein.
 
-4. APP_VERSION aur Python version mein kya difference hai?
+12. KYA IS FILE SE DATABASE CONNECT HO JATA HAI?
 
-5. API_PREFIX ki current value kya hai?
+Nahi.
 
-6. Kya API_PREFIX define karne se existing routes automatically change hote hain?
+Ye file sirf configuration values define karti hai.
 
-7. String kise kehte hain?
+Abhi:
+- MySQL connection open nahi hota.
+- Database exist karta hai ya nahi, ye check nahi hota.
+- Username/password verify nahi hote.
+- Koi SQL query execute nahi hoti.
+- Database connection close karne ka code nahi hai.
 
-8. Doosri Python file mein APP_NAME use karne ke liye kaunsa keyword use hota hai?
+Connection establish karne ke liye MySQL driver aur separate database
+connection logic implement karni hogi.
 
-9. Kya uppercase variable names Python mein automatically unchangeable hote hain?
+13. QUICK REVISION
 
-10. Real passwords ko Git repository mein hardcode kyun nahi karna chahiye?
+Q1. os.getenv() kya karta hai?
+Answer: Environment variable ki value read karta hai, aur variable
+missing ho toh optional default value return kar sakta hai.
 
-==================================================
-14. FINAL SUMMARY
-==================================================
+Q2. int() kyun use hua?
+Answer: Port ki string value ko integer mein convert karne ke liye.
 
-config.py AU Hub backend ki basic configuration values ko ek jagah par rakhti hai.
+Q3. Kya API_PREFIX define karne se routes automatically change hote hain?
+Answer: Nahi. Is variable ko routing configuration mein use karna hoga.
 
-APP_NAME application ka naam store karta hai.
+Q4. Kya DB_NAME define karne se MySQL database create hota hai?
+Answer: Nahi.
 
-APP_VERSION application ki version string store karta hai.
+Q5. Kya DB_PASSWORD ko GitHub par commit karna chahiye?
+Answer: Nahi. Real credentials ko source code aur public repository se
+bahar rakhna chahiye.
 
-API_PREFIX future versioned API routes ke liye planned common prefix store karta hai.
+Q6. Kya ye configuration database connection test karti hai?
+Answer: Nahi. Ye sirf configuration values prepare karti hai.
 
-Ye variables abhi doosri files mein use nahi ho rahe. Future implementation mein hum inhe import karke actual application configuration se connect karenge.
+FINAL SUMMARY
 
-END OF EXPLANATION
+config.py AU Hub ki application aur database settings ko centralize karti hai.
+
+Environment variables ki help se database settings ko source code se
+alag rakha ja sakta hai. Lekin actual connection, validation aur database
+security ke liye humein additional implementation karni hogi.
