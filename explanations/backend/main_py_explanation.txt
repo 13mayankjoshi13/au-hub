@@ -1,276 +1,279 @@
-AU HUB — BACKEND CODE EXPLANATION
 
-FILE: backend/app/main.py
+AU HUB — FASTAPI APPLICATION KI COMPLETE EXPLANATION
 
-PURPOSE
-This file creates the main FastAPI application for AU Hub. It defines the application metadata and two HTTP GET endpoints: the root endpoint and the health endpoint.
+1. FILE KA PURPOSE
 
---------------------------------------------------
-1. IMPORT STATEMENT
---------------------------------------------------
+File path:
+backend/app/main.py
 
-Code:
-from fastapi import FastAPI
+Ye AU Hub ki main FastAPI application file hai.
 
-Explanation:
-- `from` is a Python keyword used to import something from a module.
-- `fastapi` is the Python package that provides tools for building APIs.
-- `import` makes a specified object available in this file.
-- `FastAPI` is a class provided by FastAPI.
+Is file mein FastAPI application create hoti hai aur HTTP endpoints define
+kiye jaate hain.
 
-Why do we need it?
-We need the FastAPI class to create our API application.
+Abhi ismein do endpoints hain:
+- GET /
+- GET /health
 
-How does it work?
-When Python executes this statement, it loads the FastAPI class so we can create an application instance using `FastAPI()`.
+GET / basic application response return karta hai.
+GET /health application aur database ki connectivity check karta hai.
 
---------------------------------------------------
-2. CREATING THE APPLICATION
---------------------------------------------------
+2. from fastapi import FastAPI, status
 
-Code:
-app = FastAPI(
-    title="AU Hub API",
-    description=(
-        "Learning, collaboration, academic resources, "
-        "quizzes, and machine learning for the "
-        "Amrapali University community."
-    ),
-    version="0.1.0",
-)
+FastAPI class application create karne ke liye use hoti hai.
 
-Explanation:
+status module mein HTTP status codes ke readable constants hote hain.
 
-`app`
-- This is a Python variable.
-- It stores the FastAPI application object.
-- We use this variable when running the application with Uvicorn.
+Example:
+status.HTTP_503_SERVICE_UNAVAILABLE
 
-`=`
-- This is the assignment operator.
-- It assigns the object created on the right side to the variable on the left side.
+Is constant ka numeric value 503 hai.
 
-`FastAPI(...)`
-- This calls the FastAPI class to create an application instance.
-- The parentheses contain arguments used to configure the application.
+Readable constant use karne se code mein status code ka purpose samajhna
+easier hota hai.
 
-`title="AU Hub API"`
-- Sets the application's title.
-- FastAPI displays this title in its automatically generated API documentation.
+3. from fastapi.responses import JSONResponse
 
-`description=(...)`
-- Provides a longer description of the API.
-- Parentheses allow the description to be written across multiple lines.
-- The adjacent string literals are automatically joined by Python.
-- The description explains AU Hub's intended focus.
+JSONResponse custom JSON response return karne ke liye use hota hai.
 
-`version="0.1.0"`
-- Defines the current API version.
-- `0.1.0` is a version label, not the Python version.
-- We can update it when the API evolves.
+Isse hum response ka HTTP status code aur response body explicitly
+control kar sakte hain.
 
-The comma after each argument separates one argument from another.
-The closing parenthesis ends the FastAPI constructor call.
+Normal dictionary return karne par FastAPI aam taur par HTTP 200 response
+return karta hai.
 
-Why do we need this?
-It creates the application object and supplies metadata that appears in the API documentation.
+Lekin database unhealthy hone par humein HTTP 503 return karna hai.
+Isliye JSONResponse use kiya gaya hai.
 
-Important:
-Creating the application object does not automatically start the server. Uvicorn starts the server and serves this application.
+4. from backend.app.db.connection import check_database_connection
 
---------------------------------------------------
-3. ROOT ENDPOINT
---------------------------------------------------
+Ye database module se function import karta hai.
 
-Code:
-@app.get("/")
-def root():
-    return {
-        "success": True,
-        "message": "AU Hub API is running.",
-    }
+check_database_connection() database connection establish karke
+SELECT 1 query execute karta hai.
 
-Line-by-line explanation:
+Query successful hone par True return hota hai.
+Database connector error hone par False return hota hai.
 
-`@app.get("/")`
-- `@` introduces a Python decorator.
-- `app.get(...)` registers an HTTP GET endpoint with the FastAPI application.
-- `/` is the root URL path.
-- A GET request is generally used to retrieve information.
+Ye function connection cleanup bhi karta hai.
 
-When someone sends a GET request to:
-http://127.0.0.1:8000/
+5. app = FastAPI(...)
 
-FastAPI calls the `root()` function.
+FastAPI(...) application object create karta hai.
 
-`def root():`
-- `def` is the Python keyword for defining a function.
-- `root` is the function name.
-- `()` contains the function's parameters; this function needs none.
-- `:` begins the function body.
+title:
+API documentation mein application ka naam show karta hai.
 
-`return`
-- Sends the function's result back to FastAPI.
+description:
+Application ke purpose ka description provide karta hai.
 
-The returned dictionary contains:
+version:
+Application version specify karta hai.
 
-`"success": True`
-- `"success"` is a string used as a dictionary key.
-- `True` is Python's Boolean value representing true.
-- It indicates that the endpoint returned its success response.
+Ye metadata /docs jaise API documentation interface mein useful hota hai.
 
-`"message": "AU Hub API is running."`
-- Provides a human-readable status message.
+6. @app.get("/")
 
-The commas separate dictionary entries. The closing brace ends the dictionary.
+@app.get("/") ek decorator hai.
 
-FastAPI converts this Python dictionary into a JSON HTTP response.
+Decorator FastAPI ko batata hai ki root URL par GET request aane par
+neeche defined function handle karega.
 
-Example response:
+GET HTTP method aam taur par data retrieve karne ke liye use hota hai.
+
+7. def root():
+
+Ye root endpoint ka handler function hai.
+
+Jab client GET / request bhejta hai, FastAPI root() execute karta hai.
+
+Function dictionary return karta hai:
+
 {
-    "success": true,
+    "success": True,
     "message": "AU Hub API is running."
 }
 
-Notice that Python's `True` becomes JSON's `true`.
+FastAPI dictionary ko JSON response mein convert karta hai.
 
---------------------------------------------------
-4. HEALTH CHECK ENDPOINT
---------------------------------------------------
+Ye endpoint sirf basic application response check karta hai.
+Ye database connection test nahi karta.
 
-Code:
-@app.get("/health")
-def health_check():
-    return {
-        "status": "healthy",
-        "service": "au-hub-api",
-    }
+8. @app.get("/health")
 
-Line-by-line explanation:
+Ye decorator /health path ke liye GET endpoint register karta hai.
 
-`@app.get("/health")`
-- Registers a GET endpoint at the `/health` path.
-- Its full local URL is:
-  http://127.0.0.1:8000/health
+Is endpoint ka purpose database connectivity check karna bhi hai.
 
-`def health_check():`
-- Defines a function named `health_check`.
-- FastAPI calls it when a GET request reaches `/health`.
+9. def health_check():
 
-`return`
-- Returns the response data.
+Ye /health endpoint ka handler function hai.
 
-`"status": "healthy"`
-- Reports that this endpoint is responding normally.
+Is function ke andar sabse pehle database connectivity check hoti hai.
 
-`"service": "au-hub-api"`
-- Identifies the service whose status is being reported.
+10. database_healthy = check_database_connection()
 
-FastAPI converts the dictionary into JSON.
+Ye database health-check function call karta hai.
 
-Example response:
+Returned boolean value database_healthy variable mein store hoti hai.
+
+Agar database connection aur SELECT 1 query successful hain:
+database_healthy = True
+
+Agar connector ki Error exception aati hai:
+database_healthy = False
+
+Important:
+check_database_connection() mein handle ki gayi connector errors False
+return karti hain. Unexpected errors jo catch nahi hui hain, woh phir bhi
+endpoint tak propagate ho sakti hain.
+
+11. if not database_healthy:
+
+not Python ka logical operator hai.
+
+Agar database_healthy False hai, toh not database_healthy True ho jaata hai.
+
+Is condition ke true hone par unhealthy response return kiya jaata hai.
+
+12. JSONResponse(...)
+
+status_code=status.HTTP_503_SERVICE_UNAVAILABLE
+
+Iska matlab HTTP 503 response return karna hai.
+
+503 ka meaning Service Unavailable hai.
+
+Ye indicate karta hai ki requested service filhaal required dependency
+ke unavailable hone ki wajah se healthy nahi hai.
+
+content mein JSON response body specify ki gayi hai:
+
 {
-    "status": "healthy",
-    "service": "au-hub-api"
+    "status": "unhealthy",
+    "service": "au-hub-api",
+    "database": "disconnected"
 }
 
-Important limitation:
-This endpoint currently checks only that the application can respond. It does not check MySQL connectivity, database migrations, external services, or other dependencies.
+status:
+Overall health result.
 
---------------------------------------------------
-5. HOW THE COMPLETE FILE WORKS
---------------------------------------------------
+service:
+Service identifier.
 
-1. Python imports the FastAPI class.
-2. The FastAPI application object is created and stored in `app`.
-3. The root GET endpoint is registered.
-4. The health GET endpoint is registered.
-5. Uvicorn loads the application using the `app` variable.
-6. When a client sends a matching GET request, FastAPI calls the corresponding function.
-7. The function returns a Python dictionary.
-8. FastAPI serializes the dictionary into JSON and sends an HTTP response.
+database:
+Database connectivity ka result.
 
---------------------------------------------------
-6. RUNNING THE APPLICATION
---------------------------------------------------
+Ye response client ya monitoring system ko indicate karta hai ki
+database check fail hua.
 
-Run this command from the project root, D:\au-hub:
+13. HEALTHY RESPONSE
 
-python -m uvicorn backend.app.main:app --reload
+Agar database_healthy True hai, toh if condition ka body skip hota hai.
 
-Meaning:
+Function ye dictionary return karta hai:
 
-`python`
-Runs the Python interpreter.
+{
+    "status": "healthy",
+    "service": "au-hub-api",
+    "database": "connected"
+}
 
-`-m`
-Runs a Python module as a command-line program.
+FastAPI ise HTTP 200 response mein convert karta hai.
 
-`uvicorn`
-The ASGI server used to serve the FastAPI application.
+HTTP 200 ka matlab request successfully handle hui.
 
-`backend.app.main:app`
-- `backend.app.main` identifies the Python module in which the application is defined.
-- The colon separates the module path from the object name.
-- The final `app` identifies the FastAPI application object inside that module.
+14. HTTP 200 AUR HTTP 503 KA DIFFERENCE
 
-`--reload`
-Restarts the development server when it detects supported code changes. It is intended for development, not production deployment.
+HTTP 200:
+Endpoint ne request successfully handle ki aur database check successful tha.
 
---------------------------------------------------
-7. IMPORTANT URLS
---------------------------------------------------
+HTTP 503:
+Endpoint ne database check fail hone ki wajah se unhealthy status report kiya.
 
-Root endpoint:
-http://127.0.0.1:8000/
+HTTP status code aur JSON body alag concepts hain.
 
-Health endpoint:
-http://127.0.0.1:8000/health
+Status code HTTP response ka protocol-level result hai.
+JSON body additional details provide karti hai.
 
-Interactive API documentation:
-http://127.0.0.1:8000/docs
+15. END-TO-END FLOW
 
---------------------------------------------------
-8. CONCEPTS TO REMEMBER
---------------------------------------------------
+Client GET /health request bhejta hai.
 
-API:
-A defined way for software systems to communicate.
+Step 1:
+FastAPI health_check() execute karta hai.
 
-Endpoint:
-A specific URL path that an API exposes.
+Step 2:
+check_database_connection() call hota hai.
 
-HTTP GET:
-An HTTP method commonly used to retrieve information.
+Step 3:
+Database connection establish karne ki koshish hoti hai.
 
-Decorator:
-Python syntax that applies a function or other behavior to a definition. Here, the FastAPI decorator registers an endpoint.
+Step 4:
+SELECT 1 query execute hoti hai.
 
-Function:
-A reusable block of code defined with `def`.
+Step 5:
+Query result verify kiya jaata hai.
 
-Dictionary:
-A Python data structure containing key-value pairs.
+Step 6:
+Database connection close kiya jaata hai.
 
-JSON:
-A text format commonly used to exchange structured data between applications.
+Step 7:
+Function True ya False return karta hai.
 
-Uvicorn:
-An ASGI server that runs the application and handles incoming HTTP requests.
+Step 8:
+FastAPI HTTP 200 ya HTTP 503 response return karta hai.
 
-FastAPI:
-A Python framework for building APIs.
+16. IMPORTANT LIMITATIONS
 
---------------------------------------------------
-9. CURRENT FILE LIMITATIONS
---------------------------------------------------
+Ye health endpoint basic database connectivity check karta hai.
 
-- No database connection has been configured in this file.
-- No authentication or authorization has been implemented here.
-- No business logic has been added yet.
-- The health endpoint does not verify database health.
-- The two endpoints are basic development endpoints.
+Ye verify nahi karta ki:
+- Saari required tables exist karti hain.
+- Database schema correct hai.
+- Database performance acceptable hai.
+- Har application feature kaam kar raha hai.
 
-These are intentional starting points. Additional features should be implemented in suitable modules as the project grows.
+Is endpoint par har request ek database connection create karti hai.
+High traffic mein frequent checks database par additional load daal sakte hain.
 
-END OF EXPLANATION
+Production environment mein health-check frequency aur connection management
+ko carefully design karna chahiye.
+
+17. SECURITY NOTE
+
+Health response mein database password, username ya connection string
+return nahi ki jaati.
+
+Production mein detailed internal errors ko public API responses mein
+expose karne se bachna chahiye.
+
+18. QUICK REVISION
+
+Q1. FastAPI(...) kya karta hai?
+Answer: Application object create karta hai.
+
+Q2. @app.get("/health") ka purpose kya hai?
+Answer: /health path par GET endpoint register karna.
+
+Q3. check_database_connection() kya check karta hai?
+Answer: Database connection aur SELECT 1 query ki success.
+
+Q4. HTTP 503 kab return hota hai?
+Answer: Jab database health-check False return karta hai.
+
+Q5. JSONResponse kyun use hua?
+Answer: Custom HTTP status code aur JSON body return karne ke liye.
+
+Q6. Kya / endpoint database ko check karta hai?
+Answer: Nahi. Database check /health endpoint mein hota hai.
+
+FINAL SUMMARY
+
+main.py AU Hub ki FastAPI application aur HTTP endpoints define karti hai.
+
+Updated /health endpoint database connectivity check karta hai aur uske
+result ke according HTTP 200 ya HTTP 503 return karta hai.
+
+Isse application monitoring aur future deployment ke liye ek useful
+foundation milti hai.
