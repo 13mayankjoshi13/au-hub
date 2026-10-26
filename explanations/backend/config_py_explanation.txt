@@ -1,62 +1,524 @@
-AU HUB — CONFIGURATION FILE EXPLANATION
+AU HUB — CONFIGURATION FILE KI COMPLETE EXPLANATION
 
-FILE: backend/app/core/config.py
+File ka naam: config.py
+File ka path: backend/app/core/config.py
 
-PURPOSE
+Language: Python
 
-This file stores application-level configuration constants in one central location.
+==================================================
+1. SABSE PEHLE: CONFIGURATION KYA HOTI HAI?
+==================================================
 
-1. APP_NAME
+Configuration ka simple meaning hai application ki settings.
 
-Code:
+Example ke liye, AU Hub mein humein ye information chahiye ho sakti hai:
+
+- Application ka naam kya hai?
+- Application ka version kya hai?
+- API routes kis common prefix se start honge?
+- Database se connect karne ke liye kaunsi settings use hongi?
+- Development aur production environment mein kaunsi settings alag hongi?
+
+Agar hum ye saari values alag-alag files mein likhenge, toh future mein unhe update karna difficult ho sakta hai.
+
+Isliye hum configuration se related values ko ek central jagah par rakhte hain.
+
+Hamari file ka path hai:
+
+backend/app/core/config.py
+
+Is path ko samjho:
+
+- backend: hamare project ka Python backend.
+- app: FastAPI application ka Python package.
+- core: application ke foundational components ke liye folder.
+- config.py: configuration values rakhne wali Python file.
+
+Abhi is file mein sirf basic constants hain. Future mein zaroorat ke according hum proper settings management bhi add kar sakte hain.
+
+==================================================
+2. HAMARA COMPLETE CODE
+==================================================
+
 APP_NAME = "AU Hub"
-
-`APP_NAME` is a Python variable containing the application's display name.
-
-The equals sign assigns the string "AU Hub" to the variable.
-
-Centralizing the name avoids repeating the same value in multiple files.
-
-2. APP_VERSION
-
-Code:
 APP_VERSION = "0.1.0"
-
-This variable stores the application's version as a string.
-
-The version can later be used in API metadata, diagnostics, or application information.
-
-It is separate from the Python, FastAPI, and Uvicorn versions.
-
-3. API_PREFIX
-
-Code:
 API_PREFIX = "/api/v1"
 
-This variable defines a planned common URL prefix for version 1 of the API.
+Ye code chhota hai, lekin ismein Python variables, assignment operator aur strings jaise important concepts hain.
 
-For example, future endpoints could use paths such as:
-- /api/v1/users
-- /api/v1/products
+Ab har line ko detail mein samajhte hain.
 
-Defining a prefix does not automatically create routes or change existing endpoints. The application must explicitly use this constant when registering routes.
+==================================================
+3. LINE 1: APP_NAME = "AU Hub"
+==================================================
 
-4. WHY USE A CONFIGURATION FILE?
+Code:
 
-As the project grows, configuration values can otherwise become scattered across multiple files.
+APP_NAME = "AU Hub"
 
-A central configuration module makes values easier to find, update, and reuse.
+Is line ka purpose AU Hub application ka naam ek variable mein store karna hai.
 
-5. WHY IS THIS FILE INSIDE core?
+Aao ise pieces mein samjhein.
 
-The `core` directory is intended for foundational application components, such as settings, security configuration, and shared infrastructure.
+A) APP_NAME
 
-6. CURRENT LIMITATIONS
+APP_NAME ek variable ka naam hai.
 
-- These are ordinary Python constants, not a validated settings system.
-- No environment variables are read yet.
-- No secrets or database credentials are stored here.
-- `main.py` does not currently import these constants.
-- The API prefix is planned but not yet applied to any routes.
+Variable ko simple language mein ek named reference samajh sakte ho, jiske through hum kisi value ko access karte hain.
+
+Yahan APP_NAME ki value "AU Hub" hai.
+
+Hum variable ka naam APP_NAME isliye rakh rahe hain kyunki ye application ka naam represent karta hai.
+
+B) =
+
+Python mein single equals sign assignment operator hai.
+
+Assignment ka meaning hai kisi value ko variable ke naam ke saath assign karna.
+
+Example:
+
+course = "Cybersecurity"
+
+Yahan course variable ko "Cybersecurity" string assign hui.
+
+Isi tarah:
+
+APP_NAME = "AU Hub"
+
+Yahan APP_NAME ko "AU Hub" assign hua.
+
+Important difference:
+
+`=` assignment ke liye use hota hai.
+
+`==` comparison ke liye use hota hai.
+
+Example:
+
+course = "Cybersecurity"
+
+Ye value assign karta hai.
+
+course == "Cybersecurity"
+
+Ye check karta hai ki course ki value "Cybersecurity" ke equal hai ya nahi. Result True ya False ho sakta hai.
+
+C) "AU Hub"
+
+Double quotes ke andar likhi hui text value Python mein string hoti hai.
+
+String ka matlab text data.
+
+Examples:
+
+"AU Hub"
+"Amrapali University"
+"Python"
+"/api/v1"
+
+Ye sab strings hain.
+
+Agar hum likhen:
+
+APP_NAME = "AU Hub"
+
+Toh variable mein application ka naam text ke roop mein store hota hai.
+
+D) APP_NAME uppercase mein kyun hai?
+
+Python mein constants ke naam conventionally uppercase letters mein likhe jaate hain.
+
+Example:
+
+APP_NAME
+APP_VERSION
+API_PREFIX
+
+Ye naming convention batata hai ki ye values configuration constants hain, jinhe aam taur par code ke dauran change karne ka intention nahi hai.
+
+Dhyan rahe: Python uppercase naam hone ki wajah se value ko automatically immutable ya unchangeable nahi bana deta. Ye ek convention hai, language restriction nahi.
+
+E) Is line ka practical benefit kya hai?
+
+Maan lo future mein AU Hub ka display name update karna ho.
+
+Agar naam bahut saari files mein hardcode kiya hai, toh multiple files edit karni pad sakti hain.
+
+Central configuration value hone par hum naam ki ek shared definition rakh sakte hain aur zaroorat ke hisaab se doosri files mein import karke use kar sakte hain.
+
+Important: Abhi hamari main.py file APP_NAME ko import ya use nahi karti. Sirf variable define karne se doosri files automatically ise use nahi karne lagti.
+
+==================================================
+4. LINE 2: APP_VERSION = "0.1.0"
+==================================================
+
+Code:
+
+APP_VERSION = "0.1.0"
+
+Is line ka purpose application ki version string store karna hai.
+
+A) APP_VERSION kya hai?
+
+Ye ek Python variable hai jo AU Hub application ki version value rakhta hai.
+
+Abhi iski value:
+
+"0.1.0"
+
+B) Version ke three parts ko samjho
+
+Software versioning mein aksar MAJOR.MINOR.PATCH format use kiya jaata hai.
+
+Example:
+
+2.4.7
+
+Common interpretation:
+
+- MAJOR: 2 — bade changes ya breaking changes.
+- MINOR: 4 — generally naye features jo backward compatibility maintain karte hain.
+- PATCH: 7 — generally bug fixes aur chhote corrections.
+
+Hamari current value:
+
+0.1.0
+
+Ismein:
+- Major = 0
+- Minor = 1
+- Patch = 0
+
+Early-stage projects mein 0.x versions commonly indicate karti hain ki software abhi initial development phase mein hai.
+
+Ye ek convention hai; har project ka versioning policy alag ho sakta hai.
+
+C) Kya APP_VERSION Python version hai?
+
+Nahi.
+
+APP_VERSION = "0.1.0"
+
+AU Hub application ki apni version string hai.
+
+Python version alag hota hai, jaise hamare development environment mein Python 3.10.0.
+
+FastAPI aur Uvicorn ke package versions bhi alag hain.
+
+In sabko confuse mat karna:
+
+- Python version: Python interpreter ka version.
+- FastAPI version: FastAPI package ka version.
+- Uvicorn version: Uvicorn package ka version.
+- APP_VERSION: AU Hub application ki version string.
+
+D) Version ko string mein kyun rakha hai?
+
+Humne "0.1.0" quotes ke andar likha hai, isliye Python ise string ke roop mein treat karta hai.
+
+Version identifiers ko strings mein rakhna convenient hota hai, kyunki unhe numerical calculations karne ke liye use nahi kiya ja raha.
+
+E) Kya abhi API documentation mein ye version show hoga?
+
+Abhi automatically nahi.
+
+Hamari main.py mein pehle se ye code hai:
+
+app = FastAPI(
+    title="AU Hub API",
+    description=(
+        "Learning, collaboration, academic resources, "
+        "quizzes, and machine learning for the "
+        "Amrapali University community."
+    ),
+    version="0.1.0",
+)
+
+Yahan version directly FastAPI ko diya gaya hai.
+
+APP_VERSION ko define karne se main.py apne aap usse use nahi karegi. Future mein hum main.py ko update karke configuration se value import kar sakte hain.
+
+==================================================
+5. LINE 3: API_PREFIX = "/api/v1"
+==================================================
+
+Code:
+
+API_PREFIX = "/api/v1"
+
+Ye variable future API routes ke liye common URL prefix define karta hai.
+
+A) API kya hoti hai?
+
+API ka full form Application Programming Interface hai.
+
+Simple terms mein, API ek defined interface hai jiske through ek software doosre software se communicate kar sakta hai.
+
+AU Hub mein frontend aur backend ko communicate karna hoga.
+
+Example:
+
+Frontend request bhej sakta hai ki user ke courses fetch karo.
+
+Backend request process karke response return karega.
+
+B) Endpoint kya hota hai?
+
+Endpoint API ka ek particular accessible path hota hai.
+
+Hamare current main.py mein do GET endpoints hain:
+
+/
+ /health
+
+Local development mein ye URLs hain:
+
+http://127.0.0.1:8000/
+http://127.0.0.1:8000/health
+
+C) Prefix ka meaning kya hai?
+
+Prefix kisi path ke beginning mein aane wala common part hota hai.
+
+Hamari value:
+
+"/api/v1"
+
+Future examples:
+
+/api/v1/users
+/api/v1/courses
+/api/v1/quizzes
+/api/v1/resources
+
+In sab paths mein common prefix "/api/v1" hai.
+
+D) API mein v1 kyun likhte hain?
+
+"v1" ka meaning API version 1 hai.
+
+Future mein API ka design significantly change hota hai aur compatibility maintain karna zaroori hota hai, toh kuch projects "/api/v2" jaise naye paths introduce karte hain.
+
+Har project ko multiple API versions ki zaroorat nahi hoti, lekin prefix versioning ek common design approach hai.
+
+E) Kya sirf API_PREFIX define karne se routes change ho jayenge?
+
+Nahi.
+
+Ye bahut important point hai.
+
+API_PREFIX = "/api/v1"
+
+Sirf ek string variable define karta hai.
+
+Jab tak FastAPI application ise routes register karte waqt use nahi karti, tab tak existing routes change nahi honge.
+
+Hamare current endpoints abhi bhi ye hain:
+
+/
+ /health
+
+Ye abhi automatically inmein convert nahi honge:
+
+/api/v1/
+/api/v1/health
+
+Routes ko prefix ke saath register karne ke liye application code mein actual configuration aur routing changes karne honge.
+
+Hum ye change tab karenge jab API structure ko formally organize karenge.
+
+==================================================
+6. YE TEENON LINES MILKAR KYA KARTI HAIN?
+==================================================
+
+Code:
+
+APP_NAME = "AU Hub"
+APP_VERSION = "0.1.0"
+API_PREFIX = "/api/v1"
+
+Step-by-step:
+
+1. Python pehli line execute karta hai.
+2. APP_NAME variable ko "AU Hub" assign hota hai.
+3. Python doosri line execute karta hai.
+4. APP_VERSION ko "0.1.0" assign hota hai.
+5. Python teesri line execute karta hai.
+6. API_PREFIX ko "/api/v1" assign hota hai.
+
+Iske baad current Python module mein ye teen names defined hote hain.
+
+Abhi ye file khud koi HTTP request process nahi karti, koi server start nahi karti aur database se connect nahi karti.
+
+Ye sirf values define karti hai, jinhe doosre modules import karke use kar sakte hain.
+
+==================================================
+7. DOOSRI FILE MEIN IN VALUES KO KAISE USE KAR SAKTE HAIN?
+==================================================
+
+Example:
+
+from backend.app.core.config import APP_NAME
+
+print(APP_NAME)
+
+Explanation:
+
+`from backend.app.core.config import APP_NAME`
+
+- `from` batata hai ki humein kis module se import karna hai.
+- `backend.app.core.config` Python module ka path hai.
+- `import APP_NAME` us module se APP_NAME name ko import karta hai.
+
+`print(APP_NAME)`
+
+- `print()` Python ka built-in function hai.
+- Ye variable ki value output mein display karta hai.
+
+Expected output:
+
+AU Hub
+
+Important:
+Ye sirf learning example hai. Abhi ise main.py mein add karne ki zaroorat nahi.
+
+==================================================
+8. FILE KA NAAM config.py KYUN HAI?
+==================================================
+
+Python source files aam taur par `.py` extension use karti hain.
+
+`config` filename ka descriptive part hai.
+
+Isliye:
+
+config.py
+
+Configuration se related Python code ke liye ek clear naam hai.
+
+Isi tarah:
+- main.py: application entry point.
+- config.py: configuration values.
+- requirements.txt: Python dependencies ki list.
+
+Har file ko uske purpose ke hisaab se meaningful naam dena maintainability improve karta hai.
+
+==================================================
+9. core FOLDER KYUN BANAYA?
+==================================================
+
+Hamari directory structure:
+
+backend/
+    app/
+        core/
+            config.py
+
+`core` folder foundational application components ke liye hai.
+
+Future mein ismein settings, security-related configuration aur doosre shared components aa sakte hain.
+
+Lekin har project ka structure alag ho sakta hai. Folder name `core` hone se Python automatically koi special functionality apply nahi karta.
+
+Ye organization ka decision hai.
+
+==================================================
+10. KYA IS FILE MEIN SENSITIVE INFORMATION RAKH SAKTE HAIN?
+==================================================
+
+Configuration file mein kuch settings ho sakti hain, lekin passwords, secret keys aur database credentials ko seedha source code mein hardcode karna avoid karna chahiye.
+
+Example of what NOT to do:
+
+DATABASE_PASSWORD = "my-real-password"
+
+Real credentials ko source code mein rakhne se woh Git history ya repository ke through expose ho sakte hain.
+
+Future mein hum environment variables aur suitable settings management use karenge.
+
+Abhi hamari file mein sirf non-sensitive application constants hain.
+
+==================================================
+11. COMMON MISTAKES
+==================================================
+
+Mistake 1:
+APP_NAME == "AU Hub"
+
+Agar hum value assign karna chahte hain, toh `=` use karenge, `==` nahi.
+
+Mistake 2:
+APP_VERSION = 0.1.0
+
+Ye valid version string nahi hai. Is format ko quotes mein likhna chahiye:
+
+APP_VERSION = "0.1.0"
+
+Mistake 3:
+API_PREFIX define karke assume karna ki saare routes change ho gaye.
+
+Aisa nahi hota. Configuration variable ko code mein use bhi karna padta hai.
+
+Mistake 4:
+APP_VERSION ko Python version samajhna.
+
+Ye AU Hub ki version string hai, Python interpreter ka version nahi.
+
+==================================================
+12. ABHI KYA IMPLEMENTED HAI AUR KYA NAHI?
+==================================================
+
+Implemented:
+- APP_NAME constant.
+- APP_VERSION constant.
+- API_PREFIX constant.
+
+Abhi implemented nahi:
+- Environment variables se settings load karna.
+- Database configuration.
+- Secret management.
+- API routes par prefix apply karna.
+- main.py ko in constants ka use karwana.
+
+Ye distinction important hai: code mein variable define karna aur us variable ko application mein actually use karna do alag cheezein hain.
+
+==================================================
+13. QUICK REVISION QUESTIONS
+==================================================
+
+1. Configuration ka simple meaning kya hai?
+
+2. Python mein `=` aur `==` mein kya difference hai?
+
+3. APP_NAME ki current value kya hai?
+
+4. APP_VERSION aur Python version mein kya difference hai?
+
+5. API_PREFIX ki current value kya hai?
+
+6. Kya API_PREFIX define karne se existing routes automatically change hote hain?
+
+7. String kise kehte hain?
+
+8. Doosri Python file mein APP_NAME use karne ke liye kaunsa keyword use hota hai?
+
+9. Kya uppercase variable names Python mein automatically unchangeable hote hain?
+
+10. Real passwords ko Git repository mein hardcode kyun nahi karna chahiye?
+
+==================================================
+14. FINAL SUMMARY
+==================================================
+
+config.py AU Hub backend ki basic configuration values ko ek jagah par rakhti hai.
+
+APP_NAME application ka naam store karta hai.
+
+APP_VERSION application ki version string store karta hai.
+
+API_PREFIX future versioned API routes ke liye planned common prefix store karta hai.
+
+Ye variables abhi doosri files mein use nahi ho rahe. Future implementation mein hum inhe import karke actual application configuration se connect karenge.
 
 END OF EXPLANATION
