@@ -1,0 +1,105 @@
+AU HUB — __init__.py KI EXPLANATION
+
+File path: backend/app/core/__init__.py
+
+==================================================
+1. __init__.py KYA HAI?
+==================================================
+
+`__init__.py` ek special naam wali Python file hai.
+
+Is file ka use kisi directory ko regular Python package ke roop mein identify karne ke liye kiya jaata hai.
+
+Hamare project mein path hai:
+
+backend/app/core/__init__.py
+
+Iska matlab:
+- backend: backend code.
+- app: application package.
+- core: foundational application modules ka folder.
+- __init__.py: core package ki initialization file.
+
+==================================================
+2. FILE KE NAAM KO SAMAJHO
+==================================================
+
+`__init__`
+Python mein initialization se related ek conventional naam hai.
+
+Double underscores ke saath aise names ko aksar "dunder" names kaha jaata hai. Dunder ka matlab double underscore hai.
+
+`__init__.py`
+Yahan `.py` batata hai ki ye Python source file hai.
+
+Is filename ko exactly isi tarah likhna chahiye.
+
+==================================================
+3. KYA IS FILE MEIN CODE LIKHNA ZAROORI HAI?
+==================================================
+
+Nahi.
+
+Hamari current `core` directory ke liye file empty reh sakti hai.
+
+Empty file bhi package structure ko explicit banane mein useful hai.
+
+Jab Python kisi regular package ko import karta hai, toh package initialization file ka code execute ho sakta hai.
+
+Lekin empty file mein execute karne ke liye koi statements nahi hain.
+
+==================================================
+4. KYA __init__.py HAR DIRECTORY MEIN ZAROORI HAI?
+==================================================
+
+Har directory mein mandatory nahi hai.
+
+Modern Python namespace packages ko `__init__.py` ke bina bhi support karta hai.
+
+Phir bhi, traditional regular package structure ko clear rakhne ke liye hum selected application directories mein `__init__.py` rakh sakte hain.
+
+==================================================
+5. KYA YE FILE API START KARTI HAI?
+==================================================
+
+Nahi.
+
+Ye file:
+- FastAPI server start nahi karti.
+- HTTP endpoint define nahi karti.
+- Database connection create nahi karti.
+- Application settings automatically configure nahi karti.
+
+Iska current purpose package structure ko explicit banana hai.
+
+==================================================
+6. __init__.py AUR main.py MEIN DIFFERENCE
+==================================================
+
+`main.py`:
+Hamare project mein FastAPI application create karti hai aur HTTP endpoints define karti hai.
+
+`__init__.py`:
+Package initialization ke liye hoti hai. Ismein code ho bhi sakta hai aur file empty bhi reh sakti hai.
+
+Dono files ka purpose alag hai.
+
+==================================================
+7. QUICK REVISION
+==================================================
+
+1. __init__.py ka conventional purpose kya hai?
+2. Kya empty __init__.py valid hai?
+3. Kya modern Python har package directory mein __init__.py require karta hai?
+4. Kya __init__.py apne aap FastAPI server start karti hai?
+5. main.py aur __init__.py ka role kaise different hai?
+
+==================================================
+SUMMARY
+==================================================
+
+backend/app/core/__init__.py ko abhi empty rakhenge.
+
+Ye core directory ke regular Python package structure ko explicit banati hai. Ismein unnecessary code add karne ki zaroorat nahi hai.
+
+END OF EXPLANATION
