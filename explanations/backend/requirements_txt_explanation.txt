@@ -1,0 +1,149 @@
+AU HUB — BACKEND DEPENDENCIES EXPLANATION
+
+FILE: backend/requirements.txt
+
+PURPOSE
+
+This file lists the Python packages that AU Hub's backend needs directly to run its current FastAPI application.
+
+Current contents:
+
+fastapi==0.162.0
+uvicorn==0.54.0
+
+--------------------------------------------------
+1. FASTAPI DEPENDENCY
+--------------------------------------------------
+
+Line:
+fastapi==0.162.0
+
+`fastapi`
+The name of the Python package used to build AU Hub's HTTP API.
+
+FastAPI provides:
+- Route and endpoint definitions.
+- Request handling.
+- Response serialization.
+- Automatic interactive API documentation.
+- Request and response validation features.
+
+In our project, `backend/app/main.py` imports FastAPI and creates the application object.
+
+`==`
+This is a version-specification operator used by Python package installers.
+
+It means that the specified version is required.
+
+`0.162.0`
+This is the exact FastAPI version currently installed in our virtual environment.
+
+Why pin the version?
+It makes dependency installation more predictable and helps teammates use the same direct dependency version.
+
+--------------------------------------------------
+2. UVICORN DEPENDENCY
+--------------------------------------------------
+
+Line:
+uvicorn==0.54.0
+
+`uvicorn`
+An ASGI server used to run our FastAPI application and handle incoming HTTP requests.
+
+`==`
+Requires the specified package version.
+
+`0.54.0`
+The exact Uvicorn version currently installed in our virtual environment.
+
+How we use it:
+python -m uvicorn backend.app.main:app --reload
+
+Uvicorn loads the `app` object from `backend.app.main` and serves the application locally.
+
+`--reload` automatically restarts the development server when supported code changes are detected. It is intended for development.
+
+--------------------------------------------------
+3. WHY DO WE NEED THIS FILE?
+--------------------------------------------------
+
+Without a dependency list, another developer would need to know which packages to install manually.
+
+With requirements.txt, they can install the listed dependencies using:
+
+python -m pip install -r backend/requirements.txt
+
+The `-r` option tells pip to read package requirements from a file.
+
+Important:
+Run this command from the project root, where the `backend` folder exists.
+
+--------------------------------------------------
+4. DIRECT AND TRANSITIVE DEPENDENCIES
+--------------------------------------------------
+
+Direct dependencies are packages our project chooses to use directly. In this file, those are FastAPI and Uvicorn.
+
+Transitive dependencies are packages required by those packages.
+
+For example, FastAPI depends on other packages for functionality such as validation and request processing. Pip resolves and installs compatible required dependencies automatically.
+
+We do not need to manually list every transitive dependency in this basic requirements file.
+
+--------------------------------------------------
+5. VIRTUAL ENVIRONMENT
+--------------------------------------------------
+
+Our virtual environment is located at:
+
+D:\au-hub\.venv
+
+A virtual environment isolates project-specific Python packages from other Python projects on the same computer.
+
+Before installing or checking project packages, make sure the intended virtual environment is active.
+
+The `(.venv)` shown in the PowerShell prompt indicates that the environment is activated in that terminal.
+
+--------------------------------------------------
+6. REPRODUCIBILITY AND VERSION PINNING
+--------------------------------------------------
+
+Version pinning makes it easier to reproduce the same direct package versions on another machine.
+
+However, this file alone is not a complete guarantee of perfectly identical environments:
+- Transitive dependencies may resolve differently over time.
+- Python versions and operating systems can differ.
+- Other system-level dependencies may be required.
+
+For stricter reproducibility, a project can later use a lock file or a fully pinned environment, with suitable testing.
+
+--------------------------------------------------
+7. CURRENT LIMITATIONS
+--------------------------------------------------
+
+- This file currently lists only FastAPI and Uvicorn as direct dependencies.
+- It does not configure the database.
+- It does not create database tables.
+- It does not install the frontend's JavaScript dependencies.
+- It does not configure environment variables or application secrets.
+
+As the backend grows, additional direct dependencies may be added when the code actually requires them.
+
+--------------------------------------------------
+8. IMPORTANT COMMANDS
+--------------------------------------------------
+
+Display installed FastAPI information:
+python -m pip show fastapi
+
+Display installed Uvicorn information:
+python -m pip show uvicorn
+
+Install dependencies from this file:
+python -m pip install -r backend/requirements.txt
+
+Run the backend:
+python -m uvicorn backend.app.main:app --reload
+
+END OF EXPLANATION
