@@ -1,279 +1,191 @@
+# Main FastAPI Application — Router Integration
 
-AU HUB — FASTAPI APPLICATION KI COMPLETE EXPLANATION
+## 1. Is file ka purpose
 
-1. FILE KA PURPOSE
+`backend/app/main.py` AU Hub ke FastAPI backend ka entry point hai.
 
-File path:
-backend/app/main.py
+Is file mein:
+- FastAPI application create hoti hai.
+- Application ka title, description aur version set hote hain.
+- Authentication router register hota hai.
+- Root endpoint API ka basic response deta hai.
+- Health endpoint database connection check karta hai.
 
-Ye AU Hub ki main FastAPI application file hai.
+Jab hum command run karte hain:
 
-Is file mein FastAPI application create hoti hai aur HTTP endpoints define
-kiye jaate hain.
+```powershell
+python -m uvicorn backend.app.main:app --reload
+```
 
-Abhi ismein do endpoints hain:
-- GET /
-- GET /health
+Uvicorn `backend.app.main` module ke andar `app` object ko load karta hai.
 
-GET / basic application response return karta hai.
-GET /health application aur database ki connectivity check karta hai.
+## 2. FastAPI imports
 
-2. from fastapi import FastAPI, status
+```python
+from fastapi import FastAPI, status
+from fastapi.responses import JSONResponse
+```
 
-FastAPI class application create karne ke liye use hoti hai.
+`FastAPI` application create karta hai.
 
-status module mein HTTP status codes ke readable constants hote hain.
+`status` HTTP status constants provide karta hai, jaise `HTTP_503_SERVICE_UNAVAILABLE`.
 
-Example:
-status.HTTP_503_SERVICE_UNAVAILABLE
+`JSONResponse` JSON response ko custom HTTP status code ke saath return karne ke liye use hota hai.
 
-Is constant ka numeric value 503 hai.
+## 3. Configuration imports
 
-Readable constant use karne se code mein status code ka purpose samajhna
-easier hota hai.
+```python
+from backend.app.core.config import (
+    API_PREFIX,
+    APP_NAME,
+    APP_VERSION,
+)
+```
 
-3. from fastapi.responses import JSONResponse
+Ye values configuration file se import hoti hain.
 
-JSONResponse custom JSON response return karne ke liye use hota hai.
+- `API_PREFIX` ki value `/api/v1` hai.
+- `APP_NAME` ki value `AU Hub` hai.
+- `APP_VERSION` ki value `0.1.0` hai.
 
-Isse hum response ka HTTP status code aur response body explicitly
-control kar sakte hain.
+Configuration ko ek central file mein rakhne se application ke different parts mein same values dobara define nahi karni padti.
 
-Normal dictionary return karne par FastAPI aam taur par HTTP 200 response
-return karta hai.
+## 4. Database connection check
 
-Lekin database unhealthy hone par humein HTTP 503 return karna hai.
-Isliye JSONResponse use kiya gaya hai.
+```python
+from backend.app.db.connection import check_database_connection
+```
 
-4. from backend.app.db.connection import check_database_connection
+Ye function database module se import hota hai. Health endpoint ise call karke check karta hai ki database query successfully execute ho rahi hai ya nahi.
 
-Ye database module se function import karta hai.
+## 5. Authentication router import
 
-check_database_connection() database connection establish karke
-SELECT 1 query execute karta hai.
+```python
+from backend.app.routes.auth import router as auth_router
+```
 
-Query successful hone par True return hota hai.
-Database connector error hone par False return hota hai.
+`auth.py` file mein router ka variable `router` naam se defined hai.
 
-Ye function connection cleanup bhi karta hai.
+`as auth_router` import ke waqt us variable ko `auth_router` naam deta hai. Isse main application mein router ka purpose clearly samajh aata hai.
 
-5. app = FastAPI(...)
+## 6. FastAPI application creation
 
-FastAPI(...) application object create karta hai.
+```python
+app = FastAPI(
+    title=f"{APP_NAME} API",
+    description=(
+        "Learning, collaboration, academic resources, "
+        "quizzes, and machine learning for the "
+        "Amrapali University community."
+    ),
+    version=APP_VERSION,
+)
+```
 
-title:
-API documentation mein application ka naam show karta hai.
+`FastAPI()` application object create karta hai.
 
-description:
-Application ke purpose ka description provide karta hai.
+`title` Swagger documentation mein API ka naam dikhata hai. F-string se `APP_NAME` ke saath `API` add hota hai.
 
-version:
-Application version specify karta hai.
+`description` API ka purpose explain karta hai.
 
-Ye metadata /docs jaise API documentation interface mein useful hota hai.
+`version` application version set karta hai. Ye project version metadata hai; automatically package ya database version change nahi karta.
 
-6. @app.get("/")
+## 7. Router registration
 
-@app.get("/") ek decorator hai.
+```python
+app.include_router(
+    auth_router,
+    prefix=API_PREFIX,
+)
+```
 
-Decorator FastAPI ko batata hai ki root URL par GET request aane par
-neeche defined function handle karega.
+Ye is file ka main change hai.
 
-GET HTTP method aam taur par data retrieve karne ke liye use hota hai.
+`include_router()` authentication router ke endpoints ko main application mein register karta hai.
 
-7. def root():
+Authentication router mein pehle se `prefix="/auth"` defined hai. Main application `API_PREFIX="/api/v1"` add karta hai.
 
-Ye root endpoint ka handler function hai.
+Isliye final route:
 
-Jab client GET / request bhejta hai, FastAPI root() execute karta hai.
+`/api/v1` + `/auth` + `/register`
 
-Function dictionary return karta hai:
+Final endpoint:
 
-{
-    "success": True,
-    "message": "AU Hub API is running."
-}
+`POST /api/v1/auth/register`
 
-FastAPI dictionary ko JSON response mein convert karta hai.
+Agar router ko include nahi kiya jaye, toh `auth.py` mein endpoint define hone ke bawajood woh main application mein available nahi hoga.
 
-Ye endpoint sirf basic application response check karta hai.
-Ye database connection test nahi karta.
+## 8. Root endpoint
 
-8. @app.get("/health")
+```python
+@app.get("/")
+def root():
+    return {
+        "success": True,
+        "message": "AU Hub API is running.",
+    }
+```
 
-Ye decorator /health path ke liye GET endpoint register karta hai.
+`@app.get("/")` root URL ke liye GET endpoint register karta hai.
 
-Is endpoint ka purpose database connectivity check karna bhi hai.
+Function dictionary return karta hai, jise FastAPI JSON response mein convert karta hai.
 
-9. def health_check():
+Ye basic check hai ki API respond kar rahi hai; isse database ki health confirm nahi hoti.
 
-Ye /health endpoint ka handler function hai.
+## 9. Health endpoint
 
-Is function ke andar sabse pehle database connectivity check hoti hai.
+```python
+@app.get("/health")
+def health_check():
+    database_healthy = check_database_connection()
+```
 
-10. database_healthy = check_database_connection()
+Health endpoint database connection check karta hai aur result ko `database_healthy` variable mein rakhta hai.
 
-Ye database health-check function call karta hai.
+```python
+if not database_healthy:
+```
 
-Returned boolean value database_healthy variable mein store hoti hai.
+Agar database check fail hota hai, toh unhealthy response return hota hai.
 
-Agar database connection aur SELECT 1 query successful hain:
-database_healthy = True
+```python
+return JSONResponse(
+    status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    content={
+        "status": "unhealthy",
+        "service": "au-hub-api",
+        "database": "disconnected",
+    },
+)
+```
 
-Agar connector ki Error exception aati hai:
-database_healthy = False
+HTTP `503 Service Unavailable` indicate karta hai ki service is waqt required dependency ke saath kaam nahi kar paa rahi.
 
-Important:
-check_database_connection() mein handle ki gayi connector errors False
-return karti hain. Unexpected errors jo catch nahi hui hain, woh phir bhi
-endpoint tak propagate ho sakti hain.
-
-11. if not database_healthy:
-
-not Python ka logical operator hai.
-
-Agar database_healthy False hai, toh not database_healthy True ho jaata hai.
-
-Is condition ke true hone par unhealthy response return kiya jaata hai.
-
-12. JSONResponse(...)
-
-status_code=status.HTTP_503_SERVICE_UNAVAILABLE
-
-Iska matlab HTTP 503 response return karna hai.
-
-503 ka meaning Service Unavailable hai.
-
-Ye indicate karta hai ki requested service filhaal required dependency
-ke unavailable hone ki wajah se healthy nahi hai.
-
-content mein JSON response body specify ki gayi hai:
-
-{
-    "status": "unhealthy",
-    "service": "au-hub-api",
-    "database": "disconnected"
-}
-
-status:
-Overall health result.
-
-service:
-Service identifier.
-
-database:
-Database connectivity ka result.
-
-Ye response client ya monitoring system ko indicate karta hai ki
-database check fail hua.
-
-13. HEALTHY RESPONSE
-
-Agar database_healthy True hai, toh if condition ka body skip hota hai.
-
-Function ye dictionary return karta hai:
-
-{
+```python
+return {
     "status": "healthy",
     "service": "au-hub-api",
-    "database": "connected"
+    "database": "connected",
 }
+```
 
-FastAPI ise HTTP 200 response mein convert karta hai.
+Agar database check successful hai, toh health endpoint healthy response deta hai.
 
-HTTP 200 ka matlab request successfully handle hui.
+## 10. Testing URLs
 
-14. HTTP 200 AUR HTTP 503 KA DIFFERENCE
+Backend start karne ke baad:
 
-HTTP 200:
-Endpoint ne request successfully handle ki aur database check successful tha.
+- Root: `http://127.0.0.1:8000/`
+- Health: `http://127.0.0.1:8000/health`
+- Swagger docs: `http://127.0.0.1:8000/docs`
 
-HTTP 503:
-Endpoint ne database check fail hone ki wajah se unhealthy status report kiya.
+Swagger docs mein Authentication section ke andar registration endpoint dikhna chahiye.
 
-HTTP status code aur JSON body alag concepts hain.
+## 11. Revision questions
 
-Status code HTTP response ka protocol-level result hai.
-JSON body additional details provide karti hai.
-
-15. END-TO-END FLOW
-
-Client GET /health request bhejta hai.
-
-Step 1:
-FastAPI health_check() execute karta hai.
-
-Step 2:
-check_database_connection() call hota hai.
-
-Step 3:
-Database connection establish karne ki koshish hoti hai.
-
-Step 4:
-SELECT 1 query execute hoti hai.
-
-Step 5:
-Query result verify kiya jaata hai.
-
-Step 6:
-Database connection close kiya jaata hai.
-
-Step 7:
-Function True ya False return karta hai.
-
-Step 8:
-FastAPI HTTP 200 ya HTTP 503 response return karta hai.
-
-16. IMPORTANT LIMITATIONS
-
-Ye health endpoint basic database connectivity check karta hai.
-
-Ye verify nahi karta ki:
-- Saari required tables exist karti hain.
-- Database schema correct hai.
-- Database performance acceptable hai.
-- Har application feature kaam kar raha hai.
-
-Is endpoint par har request ek database connection create karti hai.
-High traffic mein frequent checks database par additional load daal sakte hain.
-
-Production environment mein health-check frequency aur connection management
-ko carefully design karna chahiye.
-
-17. SECURITY NOTE
-
-Health response mein database password, username ya connection string
-return nahi ki jaati.
-
-Production mein detailed internal errors ko public API responses mein
-expose karne se bachna chahiye.
-
-18. QUICK REVISION
-
-Q1. FastAPI(...) kya karta hai?
-Answer: Application object create karta hai.
-
-Q2. @app.get("/health") ka purpose kya hai?
-Answer: /health path par GET endpoint register karna.
-
-Q3. check_database_connection() kya check karta hai?
-Answer: Database connection aur SELECT 1 query ki success.
-
-Q4. HTTP 503 kab return hota hai?
-Answer: Jab database health-check False return karta hai.
-
-Q5. JSONResponse kyun use hua?
-Answer: Custom HTTP status code aur JSON body return karne ke liye.
-
-Q6. Kya / endpoint database ko check karta hai?
-Answer: Nahi. Database check /health endpoint mein hota hai.
-
-FINAL SUMMARY
-
-main.py AU Hub ki FastAPI application aur HTTP endpoints define karti hai.
-
-Updated /health endpoint database connectivity check karta hai aur uske
-result ke according HTTP 200 ya HTTP 503 return karta hai.
-
-Isse application monitoring aur future deployment ke liye ek useful
-foundation milti hai.
+1. `FastAPI()` kya create karta hai?
+2. `include_router()` ka purpose kya hai?
+3. `/api/v1` aur `/auth` combine hokar kya bante hain?
+4. Root endpoint aur health endpoint mein kya difference hai?
+5. Database disconnected hone par health endpoint ka status code kya hoga?
+6. Uvicorn command mein `backend.app.main:app` ka kya meaning hai?
