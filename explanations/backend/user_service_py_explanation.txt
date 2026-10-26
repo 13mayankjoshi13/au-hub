@@ -1,37 +1,29 @@
-# User Service — Registration Business Logic
+# User Service — Registration and Login Verification
 
-## 1. Service layer ka purpose
+## 1. Service layer ka role
 
-`backend/app/services/user_service.py` registration ke business rules handle karti hai.
+`backend/app/services/user_service.py` authentication ke business rules handle karti hai.
 
 Is file mein:
-- Password hashing aur verification functions hain.
-- Existing email check hota hai.
-- Password hash karke repository ko diya jata hai.
-- Duplicate email condition handle hoti hai.
-- Public user response return hota hai.
+- Password hashing
+- Password verification
+- User registration
+- Duplicate email handling
+- Login credentials verification
+- Inactive account rejection
 
-Repository SQL aur database operations handle karti hai. Service decide karti hai ki registration kis order mein aur kin rules ke according execute hoga.
+Repository SQL aur database access handle karti hai. Service decide karti hai ki data ko kaise use karna hai aur kaunse business rules apply hone chahiye.
 
 ## 2. Imports
 
 ```python
 from mysql.connector import IntegrityError
-```
-
-`IntegrityError` MySQL connector ki exception class hai. Database constraints violate hone par, jaise unique email duplicate hone par, ye exception aa sakti hai.
-
-```python
 from pwdlib import PasswordHash
 ```
 
-`PasswordHash` password hashing aur verification ke liye use hota hai.
+`IntegrityError` database constraint violations ko identify karne ke liye use hota hai, jaise duplicate email.
 
-Dependency install karne ke liye:
-
-```powershell
-python -m pip install "pwdlib[argon2]"
-```
+`PasswordHash` password hashing aur verification ke liye hai.
 
 ```python
 from backend.app.repositories.user_repository import (
@@ -40,14 +32,14 @@ from backend.app.repositories.user_repository import (
 )
 ```
 
-`get_user_by_email()` existing account check karta hai. `create_user()` database mein naya user insert karta hai.
+- `create_user()` database mein user create karta hai.
+- `get_user_by_email()` email se user retrieve karta hai.
 
 ```python
 from backend.app.schemas.user import UserCreate, UserResponse
 ```
 
-- `UserCreate`: incoming registration data aur validation.
-- `UserResponse`: client ko return hone wali public user information.
+`UserCreate` registration input validate karta hai. `UserResponse` public user information return karne ke liye use hota hai.
 
 ## 3. Password hasher
 
@@ -55,16 +47,14 @@ from backend.app.schemas.user import UserCreate, UserResponse
 password_hasher = PasswordHash.recommended()
 ```
 
-Ye recommended password-hashing configuration ka object create karta hai.
+Ye `pwdlib` ki recommended password-hashing configuration ka object create karta hai.
 
 ```python
 def hash_password(password: str) -> str:
     return password_hasher.hash(password)
 ```
 
-Ye function plain-text password ko encoded password hash mein convert karta hai.
-
-Database mein original password store nahi karna chahiye.
+Registration ke waqt plain-text password ko hash kiya jata hai. Database mein original password store nahi hota.
 
 ```python
 def verify_password(
@@ -74,38 +64,39 @@ def verify_password(
     return password_hasher.verify(plain_password, hashed_password)
 ```
 
-Ye function entered password ko stored hash ke against verify karta hai. Login flow mein iska use hoga.
+Login ke waqt entered password ko stored hash ke against verify kiya jata hai. Original password ko hash se recover nahi kiya jata.
 
-Malformed stored hashes ke liye verification exception raise kar sakta hai. Authentication layer ko aise errors safely handle karne honge.
+Malformed stored hash par verification exception raise kar sakta hai. Production authentication layer mein unexpected verification errors ko safely handle karna zaroori hai.
 
-## 4. Duplicate-email exception
+## 4. Custom exceptions
 
 ```python
 class EmailAlreadyRegisteredError(Exception):
     """Raised when an email address is already registered."""
 ```
 
-Hum ek custom exception define karte hain. Jab email pehle se registered ho, service ye exception raise kar sakti hai.
+Ye registration ke duplicate-email case ko represent karta hai.
 
-Custom exception ka benefit ye hai ki API layer duplicate registration ko database error ki jagah understandable client response mein convert kar sakti hai.
+```python
+class InvalidCredentialsError(Exception):
+    """Raised when login credentials are invalid."""
+```
 
-## 5. `register_user()` function
+Ye login failure ko represent karta hai. Route is exception ko baad mein HTTP `401 Unauthorized` response mein convert karega.
+
+## 5. Registration function
 
 ```python
 def register_user(user_data: UserCreate) -> UserResponse:
 ```
 
-Function `UserCreate` object accept karta hai aur `UserResponse` return karne ke liye designed hai.
-
-`user_data` mein validated registration fields hote hain. Type hint useful documentation hai; runtime validation schema aur Pydantic provide karte hain.
+Ye function validated registration data accept karta hai.
 
 ```python
 existing_user = get_user_by_email(str(user_data.email))
 ```
 
-Repository database mein matching email search karti hai.
-
-`str()` email value ko string representation mein convert karta hai, jo database query ko pass ki jati hai.
+Database mein email check hota hai.
 
 ```python
 if existing_user is not None:
@@ -114,15 +105,13 @@ if existing_user is not None:
     )
 ```
 
-Agar account milta hai, toh registration yahin stop ho jata hai. Duplicate account create karne ki koshish nahi hoti.
-
-## 6. Password hash aur database insertion
+Email pehle se registered ho, toh registration stop hota hai.
 
 ```python
 hashed_password = hash_password(user_data.password)
 ```
 
-Original password ko hash kiya jata hai.
+Password ka secure hash create hota hai.
 
 ```python
 created_user = create_user(
@@ -132,65 +121,80 @@ created_user = create_user(
 )
 ```
 
-Repository ko naam, email aur **hashed password** diya jata hai.
+Repository ko plain-text password ki jagah hash diya jata hai.
 
-Plain-text password database repository ko pass nahi kiya jata.
-
-## 7. Database duplicate-key handling
-
-```python
-except IntegrityError as error:
-```
-
-Database insertion ke waqt integrity-related error aane par ye block execute hota hai.
-
-```python
-if error.errno == 1062:
-```
-
-MySQL error code `1062` duplicate-key error ko identify karta hai.
-
-Pehle email check karna helpful hai, lekin do simultaneous registration requests dono ko initial check par email unavailable na mile, aisa ho sakta hai. Database ka `UNIQUE` constraint final protection provide karta hai.
-
-```python
-raise EmailAlreadyRegisteredError(
-    "An account with this email already exists."
-) from error
-```
-
-Duplicate-key error ko service ke custom exception mein convert kiya jata hai. `from error` original exception ko cause ke roop mein preserve karta hai.
-
-```python
-raise
-```
-
-Agar error duplicate-key error nahi hai, toh use hide nahi karte. Unexpected database failures ko API layer safely handle karegi.
-
-## 8. Public response
+`IntegrityError` ke case mein MySQL error `1062` duplicate-key error identify karta hai. Database ka unique email constraint simultaneous registration requests ke against bhi protection provide karta hai.
 
 ```python
 return UserResponse.model_validate(created_user)
 ```
 
-Database se mila record `UserResponse` schema mein convert hota hai.
+Public user fields response schema mein convert hote hain. Password hash response mein include nahi hota.
 
-Public response mein `id`, `full_name`, `email`, `role` aur `is_active` jaise fields hote hain. `password_hash` return nahi hota.
+## 6. `authenticate_user()` function
 
-`model_validate()` Pydantic v2 ka method hai. Isliye project mein Pydantic v2 installed hona chahiye.
+```python
+def authenticate_user(
+    email: str,
+    password: str,
+) -> UserResponse:
+```
 
-## 9. Important limitations
+Ye function login ke liye email aur entered password accept karta hai.
 
-- Ye service abhi khud HTTP endpoint nahi hai.
-- API route ko `EmailAlreadyRegisteredError` ko HTTP `409 Conflict` response mein convert karna hoga.
-- Unexpected database errors ko controlled HTTP error mein handle karna hoga.
-- Password hashing ke baad bhi HTTPS, secure secrets management, rate limiting aur account-abuse protection zaroori hain.
-- Service ko database ke saath integration test karna abhi baaki hai.
+```python
+user = get_user_by_email(email)
+```
 
-## 10. Revision questions
+Repository database se matching user retrieve karti hai. Is query mein password hash bhi aata hai, jise public API response mein expose nahi karna chahiye.
 
-1. Service aur repository mein kya difference hai?
-2. Password database mein insert hone se pehle hash kyun hota hai?
-3. Initial email check ke baad bhi unique database constraint kyun chahiye?
-4. MySQL error `1062` kya indicate karta hai?
-5. `UserResponse` public response mein password hash kyun include nahi karta?
-6. Duplicate email ko API mein kis HTTP status code se represent karna suitable hoga?
+```python
+if user is None:
+    raise InvalidCredentialsError("Invalid email or password.")
+```
+
+Email ka account nahi mila, toh login reject hota hai.
+
+```python
+if not user["is_active"]:
+    raise InvalidCredentialsError("Invalid email or password.")
+```
+
+Agar account inactive hai, toh login reject hota hai. Database ka `is_active` field `0` ya `1` ke form mein aa sakta hai; Python mein `0` false aur `1` true hota hai.
+
+```python
+if not verify_password(password, user["password_hash"]):
+    raise InvalidCredentialsError("Invalid email or password.")
+```
+
+Entered password stored hash se match nahi karta, toh login reject hota hai.
+
+Wrong email aur wrong password ke liye same message use karne se account existence reveal karne ka risk kam hota hai.
+
+```python
+return UserResponse.model_validate(user)
+```
+
+Credentials valid hone par public user details return hoti hain. `UserResponse` mein `password_hash` field defined nahi hai, isliye hash public response mein return nahi hota.
+
+## 7. Important limitations
+
+Ye function credentials verify karta hai; abhi login session ya access token issue nahi karta.
+
+Next step mein API route is function ko call karega aur `InvalidCredentialsError` ko HTTP `401 Unauthorized` response mein convert karega.
+
+Production login ke liye:
+- HTTPS use karo.
+- Login attempts par rate limiting lagao.
+- Unexpected hashing errors ko safely handle karo.
+- Passwords aur password hashes logs mein mat likho.
+- Token/session security ko separately implement karo.
+
+## 8. Revision questions
+
+1. Registration ke waqt `hash_password()` aur login ke waqt `verify_password()` kyun use hote hain?
+2. `get_user_by_email()` ka result `None` hone ka kya meaning hai?
+3. Inactive user ko login se block karna kyun zaroori hai?
+4. Wrong email aur wrong password ke liye same message kyun use karte hain?
+5. `UserResponse` password hash ko response se kaise exclude karta hai?
+6. Kya successful password verification apne aap authenticated session create kar deti hai?
