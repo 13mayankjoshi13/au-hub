@@ -38,7 +38,7 @@ Schema:
 API request ya response ke expected data structure aur validation ko define kar sakta hai.
 
 Database model:
-ORM architecture mein database table aur uske records ko represent kar sakta hai.
+ORM architecture mein da...............0000000000000000tabase table aur uske records ko represent kar sakta hai.
 
 Example:
 
