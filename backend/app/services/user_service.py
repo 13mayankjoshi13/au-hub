@@ -16,6 +16,10 @@ class EmailAlreadyRegisteredError(Exception):
     """Raised when an email address is already registered."""
 
 
+class InvalidCredentialsError(Exception):
+    """Raised when login credentials are invalid."""
+
+
 def hash_password(password: str) -> str:
     """Convert a plain-text password into a secure password hash."""
     return password_hasher.hash(password)
@@ -56,3 +60,22 @@ def register_user(user_data: UserCreate) -> UserResponse:
         raise
 
     return UserResponse.model_validate(created_user)
+
+
+def authenticate_user(
+    email: str,
+    password: str,
+) -> UserResponse:
+    """Verify login credentials and return public user details."""
+    user = get_user_by_email(email)
+
+    if user is None:
+        raise InvalidCredentialsError("Invalid email or password.")
+
+    if not user["is_active"]:
+        raise InvalidCredentialsError("Invalid email or password.")
+
+    if not verify_password(password, user["password_hash"]):
+        raise InvalidCredentialsError("Invalid email or password.")
+
+    return UserResponse.model_validate(user)
