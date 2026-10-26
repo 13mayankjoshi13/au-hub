@@ -1,0 +1,136 @@
+# AU Hub — User Schema (`user.py`) Explanation
+
+## 1. Is file ka purpose
+
+`backend/app/schemas/user.py` mein hum AU Hub ke user-related API data ke structures define karte hain.
+
+Is file mein do Pydantic models hain:
+
+- `UserCreate`: Signup ke waqt client se aane wale data ko validate karta hai.
+- `UserResponse`: API response mein user ki safe public details represent karta hai.
+
+Schemas ka kaam data ka format validate aur describe karna hai. Ye file khud database mein user create nahi karti aur password hash bhi nahi banati.
+
+## 2. Imports
+
+`from pydantic import BaseModel, ConfigDict, EmailStr, Field`
+
+- `BaseModel`: Pydantic models banane ke liye base class.
+- `ConfigDict`: Pydantic model ki configuration define karta hai.
+- `EmailStr`: email address ke expected format ko validate karta hai. Is feature ke liye `email-validator` dependency installed honi chahiye.
+- `Field`: field-specific validation rules define karne deta hai, jaise minimum aur maximum length.
+
+## 3. UserCreate model
+
+`class UserCreate(BaseModel):`
+
+Yahan `UserCreate` naam ka model define hota hai jo `BaseModel` inherit karta hai. Inheritance ka matlab hai ki `UserCreate`, Pydantic ki validation capabilities use kar sakta hai.
+
+### `full_name`
+
+`full_name: str = Field(min_length=2, max_length=150)`
+
+- `full_name` field ka naam hai.
+- `str` batata hai ki expected value string hai.
+- `min_length=2` minimum length 2 characters rakhta hai.
+- `max_length=150` maximum length 150 characters rakhta hai.
+
+Isse bahut chhota ya excessively long naam reject kiya ja sakta hai. Ye length checks hain; ye guarantee nahi karte ki naam real person ka hai ya usmein sirf letters hain.
+
+### `email`
+
+`email: EmailStr`
+
+Email ko email-validator library ke through validate kiya jaata hai. Ye basic format mistakes pakad sakta hai, lekin ye confirm nahi karta ki email address exist karta hai ya user us email ko control karta hai.
+
+Email ownership verify karne ke liye future mein verification workflow banana padega.
+
+### `password`
+
+`password: str = Field(min_length=8, max_length=128)`
+
+Password ko string ke roop mein receive kiya jaata hai aur uski length 8 se 128 characters tak rakhi jaati hai.
+
+Sirf length validation password ko secure nahi bana deti. Actual signup implementation mein password ko Argon2id jaise suitable password-hashing algorithm se hash karke hi database ke `password_hash` column mein store karna chahiye.
+
+Plain-text password ko database mein store nahi karna aur logs ya API responses mein expose nahi karna chahiye.
+
+## 4. UserResponse model
+
+`class UserResponse(BaseModel):`
+
+Ye model define karta hai ki user ki public information response mein kis format mein represent hogi.
+
+### `model_config`
+
+`model_config = ConfigDict(from_attributes=True)`
+
+Ye Pydantic v2 configuration hai. `from_attributes=True` hone par Pydantic kisi Python object ke attributes se model construct kar sakta hai.
+
+Ye feature database ORM objects se response banate waqt useful hota hai. Lekin is setting se database connection ya query automatically create nahi hoti.
+
+### Response fields
+
+`id: int`
+
+User ki unique numeric ID.
+
+`full_name: str`
+
+User ka display name.
+
+`email: EmailStr`
+
+Response email format ko bhi validate karta hai.
+
+`role: str`
+
+User ka role, jaise `student`, `faculty`, ya `admin`.
+
+`is_active: bool`
+
+Account active hai ya disabled, ye boolean field represent karti hai.
+
+Is response model mein `password` aur `password_hash` fields jaanbujhkar nahi rakhi gayi hain. Isse is model ke through response generate karne par ye sensitive fields response schema ka hissa nahi banti.
+
+## 5. Request aur response ka difference
+
+Signup request ka conceptual example:
+
+- `full_name`: user ka naam
+- `email`: user ka email
+- `password`: user ka diya hua password
+
+Successful signup ke baad public response mein aam taur par ye details ho sakti hain:
+
+- `id`
+- `full_name`
+- `email`
+- `role`
+- `is_active`
+
+Response mein password ya password hash return nahi karna chahiye.
+
+Abhi ye models sirf structures define karte hain. Actual endpoint, password hashing, database insert, duplicate-email handling aur error responses baad ke implementation steps mein add honge.
+
+## 6. Important limitations
+
+- Email format validation email ownership prove nahi karti.
+- Password length validation password strength ki complete guarantee nahi hai.
+- `UserResponse` khud authorization enforce nahi karta.
+- `role: str` ek general string type hai; database ke allowed roles se match karne ki validation alag se implement ki ja sakti hai.
+- Database mein email unique constraint duplicate email records ko rokne mein help karta hai, lekin API ko database errors handle karne bhi honge.
+
+## 7. Revision questions
+
+1. `BaseModel` ka kya role hai?
+2. `EmailStr` aur `str` mein kya difference hai?
+3. `Field(min_length=2, max_length=150)` kya enforce karta hai?
+4. `UserCreate` mein password kyun hai, lekin `UserResponse` mein kyun nahi?
+5. `from_attributes=True` ka use kab hota hai?
+6. Email format valid hone ka matlab kya email ownership verified hai?
+7. Password ko plain text ke bajaye hash karke kyun store karna chahiye?
+
+## Summary
+
+`UserCreate` incoming signup data ko validate karne ke liye hai, jabki `UserResponse` public user information ka structure define karta hai. Dono schemas AU Hub API mein data consistency aur sensitive information ko response se alag rakhne mein help karte hain. Ye database operations ya authentication ka replacement nahi hain.
