@@ -1,0 +1,276 @@
+AU HUB — BACKEND CODE EXPLANATION
+
+FILE: backend/app/main.py
+
+PURPOSE
+This file creates the main FastAPI application for AU Hub. It defines the application metadata and two HTTP GET endpoints: the root endpoint and the health endpoint.
+
+--------------------------------------------------
+1. IMPORT STATEMENT
+--------------------------------------------------
+
+Code:
+from fastapi import FastAPI
+
+Explanation:
+- `from` is a Python keyword used to import something from a module.
+- `fastapi` is the Python package that provides tools for building APIs.
+- `import` makes a specified object available in this file.
+- `FastAPI` is a class provided by FastAPI.
+
+Why do we need it?
+We need the FastAPI class to create our API application.
+
+How does it work?
+When Python executes this statement, it loads the FastAPI class so we can create an application instance using `FastAPI()`.
+
+--------------------------------------------------
+2. CREATING THE APPLICATION
+--------------------------------------------------
+
+Code:
+app = FastAPI(
+    title="AU Hub API",
+    description=(
+        "Learning, collaboration, academic resources, "
+        "quizzes, and machine learning for the "
+        "Amrapali University community."
+    ),
+    version="0.1.0",
+)
+
+Explanation:
+
+`app`
+- This is a Python variable.
+- It stores the FastAPI application object.
+- We use this variable when running the application with Uvicorn.
+
+`=`
+- This is the assignment operator.
+- It assigns the object created on the right side to the variable on the left side.
+
+`FastAPI(...)`
+- This calls the FastAPI class to create an application instance.
+- The parentheses contain arguments used to configure the application.
+
+`title="AU Hub API"`
+- Sets the application's title.
+- FastAPI displays this title in its automatically generated API documentation.
+
+`description=(...)`
+- Provides a longer description of the API.
+- Parentheses allow the description to be written across multiple lines.
+- The adjacent string literals are automatically joined by Python.
+- The description explains AU Hub's intended focus.
+
+`version="0.1.0"`
+- Defines the current API version.
+- `0.1.0` is a version label, not the Python version.
+- We can update it when the API evolves.
+
+The comma after each argument separates one argument from another.
+The closing parenthesis ends the FastAPI constructor call.
+
+Why do we need this?
+It creates the application object and supplies metadata that appears in the API documentation.
+
+Important:
+Creating the application object does not automatically start the server. Uvicorn starts the server and serves this application.
+
+--------------------------------------------------
+3. ROOT ENDPOINT
+--------------------------------------------------
+
+Code:
+@app.get("/")
+def root():
+    return {
+        "success": True,
+        "message": "AU Hub API is running.",
+    }
+
+Line-by-line explanation:
+
+`@app.get("/")`
+- `@` introduces a Python decorator.
+- `app.get(...)` registers an HTTP GET endpoint with the FastAPI application.
+- `/` is the root URL path.
+- A GET request is generally used to retrieve information.
+
+When someone sends a GET request to:
+http://127.0.0.1:8000/
+
+FastAPI calls the `root()` function.
+
+`def root():`
+- `def` is the Python keyword for defining a function.
+- `root` is the function name.
+- `()` contains the function's parameters; this function needs none.
+- `:` begins the function body.
+
+`return`
+- Sends the function's result back to FastAPI.
+
+The returned dictionary contains:
+
+`"success": True`
+- `"success"` is a string used as a dictionary key.
+- `True` is Python's Boolean value representing true.
+- It indicates that the endpoint returned its success response.
+
+`"message": "AU Hub API is running."`
+- Provides a human-readable status message.
+
+The commas separate dictionary entries. The closing brace ends the dictionary.
+
+FastAPI converts this Python dictionary into a JSON HTTP response.
+
+Example response:
+{
+    "success": true,
+    "message": "AU Hub API is running."
+}
+
+Notice that Python's `True` becomes JSON's `true`.
+
+--------------------------------------------------
+4. HEALTH CHECK ENDPOINT
+--------------------------------------------------
+
+Code:
+@app.get("/health")
+def health_check():
+    return {
+        "status": "healthy",
+        "service": "au-hub-api",
+    }
+
+Line-by-line explanation:
+
+`@app.get("/health")`
+- Registers a GET endpoint at the `/health` path.
+- Its full local URL is:
+  http://127.0.0.1:8000/health
+
+`def health_check():`
+- Defines a function named `health_check`.
+- FastAPI calls it when a GET request reaches `/health`.
+
+`return`
+- Returns the response data.
+
+`"status": "healthy"`
+- Reports that this endpoint is responding normally.
+
+`"service": "au-hub-api"`
+- Identifies the service whose status is being reported.
+
+FastAPI converts the dictionary into JSON.
+
+Example response:
+{
+    "status": "healthy",
+    "service": "au-hub-api"
+}
+
+Important limitation:
+This endpoint currently checks only that the application can respond. It does not check MySQL connectivity, database migrations, external services, or other dependencies.
+
+--------------------------------------------------
+5. HOW THE COMPLETE FILE WORKS
+--------------------------------------------------
+
+1. Python imports the FastAPI class.
+2. The FastAPI application object is created and stored in `app`.
+3. The root GET endpoint is registered.
+4. The health GET endpoint is registered.
+5. Uvicorn loads the application using the `app` variable.
+6. When a client sends a matching GET request, FastAPI calls the corresponding function.
+7. The function returns a Python dictionary.
+8. FastAPI serializes the dictionary into JSON and sends an HTTP response.
+
+--------------------------------------------------
+6. RUNNING THE APPLICATION
+--------------------------------------------------
+
+Run this command from the project root, D:\au-hub:
+
+python -m uvicorn backend.app.main:app --reload
+
+Meaning:
+
+`python`
+Runs the Python interpreter.
+
+`-m`
+Runs a Python module as a command-line program.
+
+`uvicorn`
+The ASGI server used to serve the FastAPI application.
+
+`backend.app.main:app`
+- `backend.app.main` identifies the Python module in which the application is defined.
+- The colon separates the module path from the object name.
+- The final `app` identifies the FastAPI application object inside that module.
+
+`--reload`
+Restarts the development server when it detects supported code changes. It is intended for development, not production deployment.
+
+--------------------------------------------------
+7. IMPORTANT URLS
+--------------------------------------------------
+
+Root endpoint:
+http://127.0.0.1:8000/
+
+Health endpoint:
+http://127.0.0.1:8000/health
+
+Interactive API documentation:
+http://127.0.0.1:8000/docs
+
+--------------------------------------------------
+8. CONCEPTS TO REMEMBER
+--------------------------------------------------
+
+API:
+A defined way for software systems to communicate.
+
+Endpoint:
+A specific URL path that an API exposes.
+
+HTTP GET:
+An HTTP method commonly used to retrieve information.
+
+Decorator:
+Python syntax that applies a function or other behavior to a definition. Here, the FastAPI decorator registers an endpoint.
+
+Function:
+A reusable block of code defined with `def`.
+
+Dictionary:
+A Python data structure containing key-value pairs.
+
+JSON:
+A text format commonly used to exchange structured data between applications.
+
+Uvicorn:
+An ASGI server that runs the application and handles incoming HTTP requests.
+
+FastAPI:
+A Python framework for building APIs.
+
+--------------------------------------------------
+9. CURRENT FILE LIMITATIONS
+--------------------------------------------------
+
+- No database connection has been configured in this file.
+- No authentication or authorization has been implemented here.
+- No business logic has been added yet.
+- The health endpoint does not verify database health.
+- The two endpoints are basic development endpoints.
+
+These are intentional starting points. Additional features should be implemented in suitable modules as the project grows.
+
+END OF EXPLANATION
