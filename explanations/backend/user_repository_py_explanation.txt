@@ -1,128 +1,240 @@
-# AU Hub — User Repository Explanation
+# User Repository — Database User Creation and Lookup
 
 ## 1. Repository ka purpose
 
-`backend/app/repositories/user_repository.py` database operations ko ek dedicated location mein rakhta hai.
+`backend/app/repositories/user_repository.py` database operations handle karti hai.
 
-AU Hub mein hum responsibilities separate rakh rahe hain:
+Is file mein do functions hain:
 
-- Schema: incoming aur outgoing data ka structure.
-- Repository: database queries aur records access karna.
-- API endpoint: HTTP requests receive karna aur responses return karna.
-- Password hashing/authentication service: passwords aur identity verification handle karna.
+1. `get_user_by_email()` — email ke through existing user find karna.
+2. `create_user()` — database mein naya user insert karna aur uski public details return karna.
 
-Is separation se code ko test, maintain aur extend karna easier hota hai.
+Repository ka kaam SQL queries aur database connections handle karna hai. Password hashing aur registration ke business rules service layer mein handle honge.
 
-## 2. Import statements
+## 2. Imports
 
-`from typing import Any`
+```python
+from typing import Any
+```
 
-`Any` Python type hint hai jo kisi bhi type ke value ko represent kar sakta hai.
+`Any` typing helper hai. Hum `dict[str, Any]` se indicate karte hain ki dictionary ki keys strings hain, jabki values alag-alag Python types ki ho sakti hain.
 
-Is file mein database row dictionary ke values alag-alag types ki ho sakti hain: `id` integer, `email` string, `is_active` boolean-like value, aur timestamps date/time values ho sakti hain.
+Example: user dictionary mein `id` integer, `email` string aur `is_active` boolean ho sakta hai.
 
-`from backend.app.db.connection import get_db_connection`
+```python
+from backend.app.db.connection import get_db_connection
+```
 
-Ye existing database connection module se `get_db_connection()` function import karta hai. Repository apni taraf se database credentials define nahi karti; connection configuration existing module se aati hai.
+Ye hamare database connection module se function import karta hai.
 
-## 3. Function definition
+Isse repository ko har function mein connection settings dobara likhne ki zaroorat nahi hoti.
 
-`def get_user_by_email(email: str) -> dict[str, Any] | None:`
+## 3. `get_user_by_email()` function
 
-- `def` Python mein function define karta hai.
-- `get_user_by_email` function ka naam hai.
-- `email: str` indicate karta hai ki email argument expected string hai.
-- `dict[str, Any] | None` return type batata hai: function dictionary return kar sakta hai ya `None`.
-- `None` ka matlab hai ki matching record nahi mila.
+```python
+def get_user_by_email(email: str) -> dict[str, Any] | None:
+```
 
-Ye type hint hai; ye apne aap email validation ya database result ki correctness guarantee nahi karta.
+- `def` function define karta hai.
+- `email: str` batata hai ki email string expected hai.
+- `dict[str, Any]` ka matlab hai user details ki dictionary.
+- `| None` indicate karta hai ki user na milne par function `None` return kar sakta hai.
 
-## 4. Database connection
+Ye union type syntax Python 3.10 aur uske baad ke versions mein supported hai.
 
-`connection = get_db_connection()`
+```python
+connection = get_db_connection()
+```
 
-Ye configured database se connection establish karta hai. Agar connection establish nahi ho paata, toh underlying connector exception raise kar sakta hai.
+Database connection create hota hai.
 
-Connection ko `try/finally` structure mein manage kiya gaya hai taaki query complete hone ke baad cleanup ho.
+```python
+cursor = connection.cursor(dictionary=True)
+```
 
-## 5. Cursor
+Cursor SQL statements execute karta hai. `dictionary=True` ke saath fetched rows dictionary format mein milti hain, jisse columns ko unke naam se access kiya ja sakta hai.
 
-`cursor = connection.cursor(dictionary=True)`
+```python
+cursor.execute(
+    """
+    SELECT id, full_name, email, password_hash,
+           role, is_active, created_at, updated_at
+    FROM users
+    WHERE email = %s
+    LIMIT 1
+    """,
+    (email,),
+)
+```
 
-Cursor SQL queries execute karne aur results retrieve karne ka interface hai.
+Is query mein:
 
-`dictionary=True` ka matlab hai ki fetched row dictionary format mein milegi. Isse columns ko unke names se access karna convenient hota hai, jaise `user["email"]`.
+- `SELECT` required columns retrieve karta hai.
+- `FROM users` batata hai ki data `users` table se aayega.
+- `WHERE email = %s` matching email select karta hai.
+- `LIMIT 1` maximum ek matching row return karne ke liye hai.
+- `(email,)` one-element tuple hai jo query parameter supply karta hai.
 
-## 6. SQL SELECT query
+Parameterized query values ko SQL statement se alag pass karti hai. Isliye user input ko string concatenation se SQL mein jodne ki zaroorat nahi hoti.
 
-Query users table se ye columns read karti hai:
+`password_hash` yahan select hota hai kyunki future authentication logic ko password verification ke liye stored hash chahiye hoga. Is dictionary ko directly public API response mein expose nahi karna chahiye.
 
-- `id`
-- `full_name`
-- `email`
-- `password_hash`
-- `role`
-- `is_active`
-- `created_at`
-- `updated_at`
-
-`FROM users` batata hai ki records kis table se read karne hain.
-
-`WHERE email = %s` email ke basis par matching record filter karta hai.
-
-`LIMIT 1` result ko maximum ek row tak limit karta hai. Database mein email unique constraint bhi hai, isliye normal schema ke under ek email ke liye maximum ek matching user hona chahiye.
-
-## 7. Parameterized query
-
-`(email,)`
-
-Ye query ko parameter tuple deta hai. Tuple mein ek item hone par trailing comma zaroori hai.
-
-`%s` connector ka parameter placeholder hai. Connector parameter ko query ke saath safely bind karta hai. Email ko f-string ya string concatenation se SQL mein embed nahi karna chahiye, kyunki untrusted input se SQL injection ka risk ho sakta hai.
-
-## 8. Result retrieve karna
-
-`return cursor.fetchone()`
+```python
+return cursor.fetchone()
+```
 
 `fetchone()` ek matching row return karta hai. Agar koi row nahi milti, toh `None` return hota hai.
 
-Returned dictionary mein `password_hash` bhi included hai, kyunki future authentication logic ko password verification ke liye hash ki zaroorat ho sakti hai.
+```python
+finally:
+    cursor.close()
+```
 
-Important: Is raw repository result ko directly public API response mein return nahi karna chahiye. Public response ko `UserResponse` jaise safe schema se serialize karna chahiye, jismein `password_hash` field nahi hai.
+`finally` cleanup ke liye use hota hai. Normal execution ho ya exception, cursor ko close karne ki koshish hoti hai.
 
-## 9. Resource cleanup
+```python
+finally:
+    connection.close()
+```
 
-Inner `finally` mein `cursor.close()` cursor ko release karta hai.
+Database connection ko close kiya jata hai, taaki connection unnecessarily open na rahe.
 
-Outer `finally` mein `connection.close()` database connection ko close karta hai.
+## 4. `create_user()` function
 
-`finally` block normal completion aur exception, dono cases mein execute hota hai. Isse database resources ko unnecessarily open chhodne ka risk kam hota hai.
+```python
+def create_user(
+    full_name: str,
+    email: str,
+    password_hash: str,
+) -> dict[str, Any]:
+```
 
-## 10. Security aur design considerations
+Ye function teen values leta hai:
 
-- SQL parameters use karna SQL injection risk ko reduce karta hai.
-- Repository mein password hashing ya authentication perform nahi hota.
-- `password_hash` sensitive information hai; logs ya API response mein expose nahi karna chahiye.
-- Email validation API schema ki responsibility hai.
-- Database connection failure ko calling service ya endpoint ko properly handle karna hoga.
-- Is initial implementation mein har call apna connection kholti aur close karti hai. Larger deployments mein connection pooling useful ho sakti hai.
+- `full_name`: user ka naam.
+- `email`: validated email address.
+- `password_hash`: pehle se hashed password.
 
-## 11. Current limitations
+Function plain-text password accept nahi karta. Service layer ko pehle `hash_password()` call karna chahiye.
 
-Ye function sirf user ko email se search karta hai. Ye user create/update/delete nahi karta aur account login nahi karata.
+```python
+connection = get_db_connection()
+```
 
-Abhi koi signup endpoint is function ko call nahi kar raha. Database integration ko end-to-end test karne ke liye future mein service aur API endpoint add karne honge.
+Naya database connection create hota hai.
 
-## 12. Revision questions
+```python
+cursor = connection.cursor(dictionary=True)
+```
 
-1. Repository ka purpose kya hai?
-2. `get_db_connection()` ka use kyun karte hain?
-3. `dictionary=True` ka kya effect hai?
-4. SQL query mein `%s` aur `(email,)` ka kya role hai?
-5. `fetchone()` record na milne par kya return karta hai?
-6. `finally` blocks kyun use kiye gaye hain?
-7. Repository se milne wale `password_hash` ko API response mein directly kyun nahi bhejna chahiye?
+Cursor insert aur select queries execute karega. Dictionary mode se selected user record dictionary ke form mein milta hai.
 
-## Summary
+```python
+cursor.execute(
+    """
+    INSERT INTO users (full_name, email, password_hash)
+    VALUES (%s, %s, %s)
+    """,
+    (full_name, email, password_hash),
+)
+```
 
-`get_user_by_email()` AU Hub database mein email ke basis par ek user record retrieve karta hai. Parameterized SQL, explicit result handling aur resource cleanup is implementation ke important parts hain. Ye repository layer ka initial read operation hai, complete authentication system nahi.
+`INSERT INTO` naya record create karta hai.
+
+Is query mein sirf teen columns supply kiye gaye hain. Database ke defaults ke according `role` default `student` aur `is_active` default `1` hoga.
+
+`%s` placeholders parameterized values ke liye hain. Values ko manually SQL string mein concatenate nahi kiya jata.
+
+Database ka unique email constraint duplicate email ko prevent karta hai.
+
+```python
+user_id = cursor.lastrowid
+```
+
+`lastrowid` newly inserted record ka generated ID deta hai. Hamare `users.id` column mein `AUTO_INCREMENT` enabled hai.
+
+```python
+connection.commit()
+```
+
+`commit()` current transaction ke changes save karta hai. Iske baad insertion database mein persist ho jata hai.
+
+```python
+cursor.execute(
+    """
+    SELECT id, full_name, email, role,
+           is_active, created_at, updated_at
+    FROM users
+    WHERE id = %s
+    """,
+    (user_id,),
+)
+```
+
+Insert ke baad hum generated ID se record retrieve karte hain. Is query mein `password_hash` intentionally include nahi kiya gaya.
+
+```python
+user = cursor.fetchone()
+```
+
+Inserted user ki row dictionary ke form mein fetch hoti hai.
+
+```python
+if user is None:
+    raise RuntimeError(
+        "User was inserted but could not be retrieved."
+    )
+```
+
+Agar expected record retrieve nahi hota, toh function runtime error raise karta hai. Ye unusual database condition ko silently ignore karne se better hai.
+
+```python
+return user
+```
+
+Public user fields wali dictionary calling function ko return hoti hai.
+
+## 5. Exception handling aur transaction
+
+```python
+except Exception:
+    connection.rollback()
+    raise
+```
+
+Agar insertion ya retrieval ke dauran exception aata hai, toh rollback attempt hota hai aur original exception dobara raise hota hai.
+
+`raise` error ko hide nahi karta; caller ko error handling ka mauka deta hai.
+
+Is implementation mein insertion ke baad commit ho chuka hota hai. Isliye agar commit ke baad retrieval fail hota hai, rollback committed insertion ko undo nahi kar sakta. Aise case mein record database mein reh sakta hai, bhale hi function error return kare.
+
+```python
+finally:
+    cursor.close()
+```
+
+Cursor cleanup hota hai.
+
+```python
+finally:
+    connection.close()
+```
+
+Database connection close hota hai.
+
+## 6. Important security points
+
+- Password ko hash karne ke baad hi `create_user()` ko pass karo.
+- `get_user_by_email()` ka complete result public response mein return mat karo, kyunki usmein `password_hash` hai.
+- Email validation schema mein honi chahiye.
+- Duplicate email ko registration service mein safely handle karna hoga.
+- Database errors mein passwords, hashes ya credentials logs mein expose nahi karne chahiye.
+
+## 7. Revision questions
+
+1. Repository aur service layer mein kya difference hai?
+2. `cursor.lastrowid` kya return karta hai?
+3. `connection.commit()` ka purpose kya hai?
+4. `connection.rollback()` committed changes ko undo kar sakta hai?
+5. `get_user_by_email()` mein `password_hash` kyun select hota hai, lekin `create_user()` ke return object mein kyun nahi?
+6. SQL query mein `(email,)` tuple kyun pass kiya gaya hai?
