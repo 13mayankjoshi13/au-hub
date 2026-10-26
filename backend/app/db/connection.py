@@ -26,3 +26,24 @@ def get_db_connection():
 
     except Error:
         raise
+
+
+def check_database_connection() -> bool:
+    """Return True if a database query succeeds."""
+    connection = None
+
+    try:
+        connection = get_db_connection()
+
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            result = cursor.fetchone()
+
+        return result == (1,)
+
+    except Error:
+        return False
+
+    finally:
+        if connection is not None and connection.is_connected():
+            connection.close()
