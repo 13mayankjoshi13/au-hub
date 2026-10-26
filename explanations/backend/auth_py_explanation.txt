@@ -1,0 +1,140 @@
+# Authentication Routes — User Registration API
+
+## 1. File ka purpose
+
+`backend/app/routes/auth.py` AU Hub ke authentication-related API endpoints organize karti hai.
+
+Is file mein abhi registration endpoint define hai:
+
+`POST /api/v1/auth/register`
+
+Ye endpoint registration request receive karta hai, request validate karwata hai, service ko call karta hai aur HTTP response return karta hai.
+
+## 2. Imports
+
+```python
+from fastapi import APIRouter, HTTPException, status
+```
+
+- `APIRouter`: related API endpoints group karne ke liye.
+- `HTTPException`: API client ko HTTP error response return karne ke liye.
+- `status`: readable HTTP status constants provide karta hai.
+
+```python
+from backend.app.schemas.user import UserCreate, UserResponse
+```
+
+`UserCreate` incoming request ka schema hai. Ye full name, email aur password ki validation rules apply karta hai.
+
+`UserResponse` response schema hai. Ye ensure karta hai ki response public user fields ke format mein ho, password ya password hash expose na ho.
+
+```python
+from backend.app.services.user_service import (
+    EmailAlreadyRegisteredError,
+    register_user,
+)
+```
+
+`register_user()` registration business logic execute karta hai.
+
+`EmailAlreadyRegisteredError` service se aane wali custom exception hai, jise route HTTP response mein convert karta hai.
+
+## 3. Router configuration
+
+```python
+router = APIRouter(
+    prefix="/auth",
+    tags=["Authentication"],
+)
+```
+
+`APIRouter` endpoints ko group karta hai.
+
+`prefix="/auth"` ka matlab hai ki is router ke endpoints ke path mein `/auth` prefix hoga.
+
+`tags=["Authentication"]` FastAPI documentation mein endpoint ko Authentication section ke andar group karta hai.
+
+Project configuration mein `API_PREFIX = "/api/v1"` defined hai. Jab `main.py` is router ko us prefix ke saath include karega, final endpoint path `/api/v1/auth/register` hoga.
+
+## 4. POST registration endpoint
+
+```python
+@router.post(
+    "/register",
+    response_model=UserResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+```
+
+Ye decorator FastAPI ko batata hai ki `POST /register` request is function ko handle karegi.
+
+`response_model=UserResponse` returned data ko response schema ke according validate aur serialize karta hai.
+
+`status_code=status.HTTP_201_CREATED` successful registration ke liye HTTP 201 set karta hai.
+
+HTTP methods ka purpose:
+
+- `GET`: data retrieve karna.
+- `POST`: data submit ya resource create karna.
+- `PUT`/`PATCH`: existing resource update karna.
+- `DELETE`: resource delete karna.
+
+## 5. Endpoint function
+
+```python
+def register(user_data: UserCreate) -> UserResponse:
+```
+
+`user_data` request body se aata hai. FastAPI aur Pydantic is data ko `UserCreate` schema ke according validate karte hain.
+
+Agar required fields missing hon ya email/password validation fail ho, FastAPI normally service call se pehle `422 Unprocessable Entity` response return karta hai.
+
+```python
+return register_user(user_data)
+```
+
+Validated data registration service ko pass hota hai. Service existing email check karti hai, password hash karti hai aur repository se user create karwati hai.
+
+Successful result `UserResponse` ke form mein return hota hai.
+
+## 6. Duplicate email handling
+
+```python
+except EmailAlreadyRegisteredError as error:
+```
+
+Agar service batati hai ki email already registered hai, route is exception ko catch karta hai.
+
+```python
+raise HTTPException(
+    status_code=status.HTTP_409_CONFLICT,
+    detail=str(error),
+) from error
+```
+
+`HTTPException` client ko HTTP error response return karta hai.
+
+`409 Conflict` indicate karta hai ki request current resource state ke saath conflict karti hai. Yahan conflict duplicate email address hai.
+
+`detail=str(error)` service ka safe error message response mein deta hai.
+
+`from error` original exception ko error chain mein preserve karta hai.
+
+Unexpected errors is route mein catch nahi kiye gaye hain. FastAPI unhe server errors ke roop mein handle karega. Production mein centralized error handling aur safe logging bhi configure karni chahiye.
+
+## 7. Abhi kya incomplete hai?
+
+Router define ho gaya hai, lekin `main.py` mein include hona abhi baaki hai.
+
+Jab router ko `API_PREFIX` ke saath include kiya jayega, tab final endpoint `/api/v1/auth/register` hoga aur `/docs` mein appear karega.
+
+Database integration aur complete registration flow ko endpoint connect hone ke baad test karna hoga.
+
+## 8. Revision questions
+
+1. `APIRouter` ka purpose kya hai?
+2. `UserCreate` aur `UserResponse` mein kya difference hai?
+3. Successful creation ke liye HTTP `201` kyun use hota hai?
+4. Duplicate email ke liye `409 Conflict` kyun suitable hai?
+5. Agar request body validation fail ho, toh service call hone se pehle kya hoga?
+6. Router define karna aur usko `main.py` mein include karna alag steps kyun hain?
